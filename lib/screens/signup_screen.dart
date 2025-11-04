@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../services/user_service.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -28,6 +29,10 @@ class _SignupScreenState extends State<SignupScreen> {
 
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
+      // 사용자 이름 저장
+      final userService = UserService();
+      userService.setUserName(_nameController.text.trim());
+      
       // 회원가입 성공 후 여행 취향 선택 화면으로 이동
       Navigator.pushNamed(context, '/preference');
     }

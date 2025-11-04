@@ -36,14 +36,39 @@ class _TravelPreferenceScreenState extends State<TravelPreferenceScreen> {
   }
 
   void _onStartPressed() {
+    print('버튼이 눌렸습니다!'); // 디버깅용 로그
+    print('선택된 선호도: $_selectedPreferences'); // 디버깅용 로그
+    
     if (_selectedPreferences.isNotEmpty) {
+      print('메인 메뉴로 이동합니다.'); // 디버깅용 로그
       // 메인 메뉴 화면으로 이동
       Navigator.pushNamed(context, '/main');
     } else {
+      print('선호도를 선택해주세요.'); // 디버깅용 로그
+      // ScaffoldMessenger를 사용하여 스낵바를 표시합니다.
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('최소 하나의 여행 스타일을 선택해주세요.'),
-          backgroundColor: Color(0xFFFC5858),
+        SnackBar(
+          content: const Text(
+            '최소 하나의 여행 스타일을 선택해주세요.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: const Color(0xFFFF8282), // 기존과 동일한 배경색
+
+          // --- 여기부터 스타일 변경 ---
+          behavior: SnackBarBehavior.floating, // 1. 플로팅 형태로 변경
+          shape: RoundedRectangleBorder( // 2. 모서리를 둥글게
+            borderRadius: BorderRadius.circular(24),
+          ),
+          margin: EdgeInsets.only( // 3. 화면 상단에 위치시키기
+            // 화면 상단에서 100만큼 떨어진 위치에 스낵바를 표시
+            bottom: 140,
+            right: 20,
+            left: 20,
+          ),
+          duration: const Duration(seconds: 2), // 2초 동안 보여짐
+          elevation: 6.0, // 그림자 효과
+          // --- 여기까지 스타일 변경 ---
         ),
       );
     }
@@ -254,43 +279,39 @@ class _StartButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 326 * scale,
-      height: 64 * scale,
-      decoration: BoxDecoration(
-        color: const Color(0xFFFF8282), // #ff8282
-        borderRadius: BorderRadius.circular(12 * scale),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0x40000000), // 25% 투명도의 검은색
-            offset: Offset(4, 4 * scale), // 아래쪽으로만 그림자
-            blurRadius: 4 * scale, // 더 부드러운 그림자
-            spreadRadius: 0,
-            blurStyle: BlurStyle.inner,
-          ),
-          BoxShadow(
-            color: const Color(0x1A000000), // 10% 투명도의 검은색 (추가 그림자)
-            offset: Offset(0, 2 * scale),
-            blurRadius: 4 * scale,
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        width: 326 * scale,
+        height: 64 * scale,
+        decoration: BoxDecoration(
+          color: const Color(0xFFFF8282), // #ff8282
           borderRadius: BorderRadius.circular(12 * scale),
-          child: Center(
-            child: Text(
-              '시작하기',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 24 * scale,
-                color: const Color(0xFFFFFFFF),
-                letterSpacing: 0,
-                height: 30 / 24, // lineHeightPx / fontSize
-              ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0x40000000), // 25% 투명도의 검은색
+              offset: Offset(4, 4 * scale), // 아래쪽으로만 그림자
+              blurRadius: 4 * scale, // 더 부드러운 그림자
+              spreadRadius: 0,
+              blurStyle: BlurStyle.inner,
+            ),
+            BoxShadow(
+              color: const Color(0x1A000000), // 10% 투명도의 검은색 (추가 그림자)
+              offset: Offset(0, 2 * scale),
+              blurRadius: 4 * scale,
+              spreadRadius: 0,
+            ),
+          ],
+        ),
+        child: Center(
+          child: Text(
+            '여행 계획 시작!',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 24 * scale,
+              color: const Color(0xFFFFFFFF),
+              letterSpacing: 0,
+              height: 30 / 24, // lineHeightPx / fontSize
             ),
           ),
         ),

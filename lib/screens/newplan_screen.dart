@@ -11,17 +11,11 @@ class NewPlanScreen extends StatefulWidget {
 
 class _NewPlanScreenState extends State<NewPlanScreen> {
   int _currentIndex = NavbarIndex.home;
-  
+
   // 텍스트 컨트롤러들
   final TextEditingController _tripNameController = TextEditingController();
   final TextEditingController _destinationController = TextEditingController();
   final TextEditingController _friendCodeController = TextEditingController();
-
-  void _onNavbarTap(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-  }
 
   void _createRoom() {
     if (_tripNameController.text.isNotEmpty && _destinationController.text.isNotEmpty) {
@@ -71,233 +65,233 @@ class _NewPlanScreenState extends State<NewPlanScreen> {
     const double designWidth = 402.0;
     final double scale = screenSize.width / designWidth;
 
-     return Scaffold(
-       backgroundColor: const Color(0xFFFFFCFC),
-       body: GestureDetector(
-         onTap: () {
-           // 다른 부분을 클릭하면 키보드 숨기기
-           FocusScope.of(context).unfocus();
-         },
-         child: SafeArea(
-           child: Column(
-          children: [
-            // 상단 메뉴 아이콘
-            Padding(
-              padding: EdgeInsets.only(
-                top: 62 * scale,
-                left: 17 * scale,
-                right: 17 * scale,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Icon(
-                      Icons.arrow_back_ios,
-                      size: 24 * scale,
-                      color: const Color(0xFF1A0802),
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFFCFC),
+      body: GestureDetector(
+        onTap: () {
+          // 다른 부분을 클릭하면 키보드 숨기기
+          FocusScope.of(context).unfocus();
+        },
+        child: SafeArea(
+          child: Column(
+            children: [
+              // 상단 메뉴 아이콘
+              Padding(
+                padding: EdgeInsets.only(
+                  top: 62 * scale,
+                  left: 17 * scale,
+                  right: 17 * scale,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Icon(
+                        Icons.arrow_back_ios,
+                        size: 24 * scale,
+                        color: const Color(0xFF1A0802),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
 
-            // 메인 콘텐츠
-            Expanded(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 17 * scale),
-                  child: Column(
-                    children: [
-                      SizedBox(height: 50 * scale),
-                      
-                      // 제목
-                      Text(
-                        '여행 메이트를 초대하세요 ✈️',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 28 * scale,
-                          color: const Color(0xFF1A0802),
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -0.25,
-                        ),
-                      ),
-                      
-                      SizedBox(height: 7 * scale),
-                      
-                      Text(
-                        '같이 여행 계획하고 일정도 함께 만들어봐요.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 20 * scale,
-                          color: const Color(0xFF1A0802),
-                          fontWeight: FontWeight.w400,
-                          letterSpacing: -0.25,
-                        ),
-                      ),
-                      
-                      SizedBox(height: 37 * scale),
-                      
-                      // 입력 폼 컨테이너
-                      Container(
-                        width: 326 * scale,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF5F5),
-                          borderRadius: BorderRadius.circular(25 * scale),
-                          border: Border.all(
-                            color: const Color(0xFF1A0802).withOpacity(0.5),
-                            width: 1,
+              // 메인 콘텐츠
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 17 * scale),
+                    child: Column(
+                      children: [
+                        SizedBox(height: 50 * scale),
+
+                        // 제목
+                        Text(
+                          '여행 메이트를 초대하세요 ✈️',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 28 * scale,
+                            color: const Color(0xFF1A0802),
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -0.25,
                           ),
                         ),
-                        child: Padding(
-                          padding: EdgeInsets.all(25 * scale),
-                          child: Column(
-                            children: [
-                              // 여행이름 입력
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '여행이름',
-                                    style: TextStyle(
-                                      fontSize: 20 * scale,
-                                      color: const Color(0xFF1A0802),
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                  SizedBox(height: 4 * scale),
-                                  Container(
-                                    height: 56 * scale,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12 * scale),
-                                    ),
-                                    child: TextField(
-                                      controller: _tripNameController,
-                                      decoration: InputDecoration(
-                                        hintText: '여행이름을 입력하세요.',
-                                        hintStyle: TextStyle(
-                                          fontSize: 16 * scale,
-                                          color: const Color(0xFF5D6470),
-                                          fontWeight: FontWeight.w400,
-                                          letterSpacing: -0.25,
-                                        ),
-                                        border: InputBorder.none,
-                                        contentPadding: EdgeInsets.symmetric(
-                                          horizontal: 10 * scale,
-                                          vertical: 16 * scale,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              
-                              SizedBox(height: 20 * scale),
-                              
-                              // 여행지 입력
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '여행지',
-                                    style: TextStyle(
-                                      fontSize: 20 * scale,
-                                      color: const Color(0xFF1A0802),
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                  SizedBox(height: 4 * scale),
-                                  Container(
-                                    height: 57 * scale,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12 * scale),
-                                    ),
-                                    child: TextField(
-                                      controller: _destinationController,
-                                      decoration: InputDecoration(
-                                        hintText: '여행지를 입력하세요.',
-                                        hintStyle: TextStyle(
-                                          fontSize: 16 * scale,
-                                          color: const Color(0xFF5D6470),
-                                          fontWeight: FontWeight.w400,
-                                          letterSpacing: -0.25,
-                                        ),
-                                        border: InputBorder.none,
-                                        contentPadding: EdgeInsets.symmetric(
-                                          horizontal: 10 * scale,
-                                          vertical: 16 * scale,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              
-                              SizedBox(height: 20 * scale),
-                              
-                              // 친구의 방에 초대받기
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '친구의 방에 초대받기',
-                                    style: TextStyle(
-                                      fontSize: 20 * scale,
-                                      color: const Color(0xFF1A0802),
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                  SizedBox(height: 4 * scale),
-                                  Container(
-                                    height: 57 * scale,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12 * scale),
-                                    ),
-                                     child: TextField(
-                                       controller: _friendCodeController,
-                                       textCapitalization: TextCapitalization.characters,
-                                       inputFormatters: [
-                                         FilteringTextInputFormatter.allow(RegExp(r'[A-Z]')),
-                                         LengthLimitingTextInputFormatter(8), // 최대 8자
-                                       ],
-                                       decoration: InputDecoration(
-                                         hintText: '친구의 코드를 입력하세요.',
-                                         hintStyle: TextStyle(
-                                           fontSize: 16 * scale,
-                                           color: const Color(0xFF5D6470),
-                                           fontWeight: FontWeight.w400,
-                                           letterSpacing: -0.25,
-                                         ),
-                                         border: InputBorder.none,
-                                         contentPadding: EdgeInsets.symmetric(
-                                           horizontal: 10 * scale,
-                                           vertical: 16 * scale,
-                                         ),
-                                       ),
-                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
+
+                        SizedBox(height: 7 * scale),
+
+                        Text(
+                          '같이 여행 계획하고 일정도 함께 만들어봐요.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 20 * scale,
+                            color: const Color(0xFF1A0802),
+                            fontWeight: FontWeight.w400,
+                            letterSpacing: -0.25,
                           ),
                         ),
-                      ),
-                      
-                      SizedBox(height: 37 * scale),
-                      
-                      // 여행 계획 시작 버튼
-                      GestureDetector(
-                        onTap: _createRoom,
-                        child: Container(
-                          width: 251 * scale,
-                          height: 49 * scale,
+
+                        SizedBox(height: 37 * scale),
+
+                        // 입력 폼 컨테이너
+                        Container(
+                          width: 326 * scale,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFF8282),
-                            borderRadius: BorderRadius.circular(12 * scale),
+                            color: const Color(0xFFFFF5F5),
+                            borderRadius: BorderRadius.circular(25 * scale),
+                            border: Border.all(
+                              color: const Color(0xFF1A0802).withOpacity(0.5),
+                              width: 1,
+                            ),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.all(25 * scale),
+                            child: Column(
+                              children: [
+                                // 여행이름 입력
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '여행이름',
+                                      style: TextStyle(
+                                        fontSize: 20 * scale,
+                                        color: const Color(0xFF1A0802),
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4 * scale),
+                                    Container(
+                                      height: 56 * scale,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(12 * scale),
+                                      ),
+                                      child: TextField(
+                                        controller: _tripNameController,
+                                        decoration: InputDecoration(
+                                          hintText: '여행이름을 입력하세요.',
+                                          hintStyle: TextStyle(
+                                            fontSize: 16 * scale,
+                                            color: const Color(0xFF5D6470),
+                                            fontWeight: FontWeight.w400,
+                                            letterSpacing: -0.25,
+                                          ),
+                                          border: InputBorder.none,
+                                          contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 10 * scale,
+                                            vertical: 16 * scale,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                SizedBox(height: 20 * scale),
+
+                                // 여행지 입력
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '여행지',
+                                      style: TextStyle(
+                                        fontSize: 20 * scale,
+                                        color: const Color(0xFF1A0802),
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4 * scale),
+                                    Container(
+                                      height: 57 * scale,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(12 * scale),
+                                      ),
+                                      child: TextField(
+                                        controller: _destinationController,
+                                        decoration: InputDecoration(
+                                          hintText: '여행지를 입력하세요.',
+                                          hintStyle: TextStyle(
+                                            fontSize: 16 * scale,
+                                            color: const Color(0xFF5D6470),
+                                            fontWeight: FontWeight.w400,
+                                            letterSpacing: -0.25,
+                                          ),
+                                          border: InputBorder.none,
+                                          contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 10 * scale,
+                                            vertical: 16 * scale,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                SizedBox(height: 20 * scale),
+
+                                // 친구의 방에 초대받기
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '친구의 방에 초대받기',
+                                      style: TextStyle(
+                                        fontSize: 20 * scale,
+                                        color: const Color(0xFF1A0802),
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4 * scale),
+                                    Container(
+                                      height: 57 * scale,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(12 * scale),
+                                      ),
+                                      child: TextField(
+                                        controller: _friendCodeController,
+                                        textCapitalization: TextCapitalization.characters,
+                                        inputFormatters: [
+                                          FilteringTextInputFormatter.allow(RegExp(r'[A-Z]')),
+                                          LengthLimitingTextInputFormatter(8), // 최대 8자
+                                        ],
+                                        decoration: InputDecoration(
+                                          hintText: '친구의 코드를 입력하세요.',
+                                          hintStyle: TextStyle(
+                                            fontSize: 16 * scale,
+                                            color: const Color(0xFF5D6470),
+                                            fontWeight: FontWeight.w400,
+                                            letterSpacing: -0.25,
+                                          ),
+                                          border: InputBorder.none,
+                                          contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 10 * scale,
+                                            vertical: 16 * scale,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        SizedBox(height: 37 * scale),
+
+                        // 여행 계획 시작 버튼
+                        GestureDetector(
+                          onTap: _createRoom,
+                          child: Container(
+                            width: 251 * scale,
+                            height: 49 * scale,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFF8282),
+                              borderRadius: BorderRadius.circular(12 * scale),
                               boxShadow: [
                                 BoxShadow(
                                   color: const Color(0x40000000), // 25% 투명도의 검은색
@@ -313,29 +307,29 @@ class _NewPlanScreenState extends State<NewPlanScreen> {
                                   spreadRadius: 0,
                                 ),
                               ],
-                          ),
-                          child: Center(
-                            child: Text(
-                              '여행 계획 시작!',
-                              style: TextStyle(
-                                fontSize: 20 * scale,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
+                            ),
+                            child: Center(
+                              child: Text(
+                                '여행 계획 시작!',
+                                style: TextStyle(
+                                  fontSize: 20 * scale,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-           ],
-         ),
-       ),
-     ),
-     );
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
