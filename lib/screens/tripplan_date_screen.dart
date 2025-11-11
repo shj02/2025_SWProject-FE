@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../widgets/top_tab.dart';
-import '../widgets/tab_navigation.dart';
-import '../widgets/custom_navbar.dart';
 import '../models/trip_room.dart';
+import '../services/trip_plan_state_service.dart';
 import '../services/trip_room_service.dart';
 import '../services/user_service.dart';
+import '../widgets/custom_navbar.dart';
+import '../widgets/tab_navigation.dart';
+import '../widgets/top_tab.dart';
 import 'main_menu_screen.dart';
 import 'community_screen.dart';
-import 'profile_edit_screen.dart';
+import 'mypage_screen.dart';
+import 'tripplan_candidates_screen.dart';
+import 'tripplan_schedule_screen.dart';
+import 'tripplan_budget_screen.dart';
+import 'tripplan_checklist_screen.dart';
 
 class TripPlanDateScreen extends StatefulWidget {
   const TripPlanDateScreen({Key? key}) : super(key: key);
@@ -20,32 +25,14 @@ class TripPlanDateScreen extends StatefulWidget {
 class _TripPlanDateScreenState extends State<TripPlanDateScreen> {
   int currentNavbarIndex = 1; // TripPlan 탭이 선택된 상태
   int selectedSubTabIndex = 0; // 날짜 탭이 기본 선택
-  List<DateTimeRange> selectedDateRanges = []; // 여러 날짜 기간 저장
+  late final List<DateTimeRange> selectedDateRanges; // 여러 날짜 기간 저장
   late TripRoomService _tripRoomService;
+  late TripPlanStateService _stateService;
   TripRoom? _currentTripRoom;
   bool _showDateConfirmModal = false; // 7-2 모달 표시 여부
   Map<String, dynamic>? _selectedRecommendedDate; // 선택된 AI 추천 날짜
   bool _isDateConfirmed = false; // 날짜 확정 여부 (7-3 화면 표시용)
-  List<Map<String, dynamic>> recommendedDates = [
-    {
-      'dateRange': '11/11 (목) - 11/13 (토)',
-      'availableMembers': 3,
-      'matchRate': 100,
-      'isSelected': false,
-    },
-    {
-      'dateRange': '11/12 (목) - 11/13 (토)',
-      'availableMembers': 3,
-      'matchRate': 100,
-      'isSelected': false,
-    },
-    {
-      'dateRange': '11/13 (목) - 11/14 (토)',
-      'availableMembers': 1,
-      'matchRate': 33,
-      'isSelected': false,
-    },
-  ];
+  late final List<Map<String, dynamic>> recommendedDates;
 
   List<Map<String, dynamic>> get members {
     if (_currentTripRoom == null) return [];
@@ -81,6 +68,12 @@ class _TripPlanDateScreenState extends State<TripPlanDateScreen> {
   void initState() {
     super.initState();
     _tripRoomService = TripRoomService();
+    _stateService = TripPlanStateService();
+    selectedDateRanges = _stateService.selectedDateRanges;
+    recommendedDates = _stateService.recommendedDates;
+    _showDateConfirmModal = _stateService.showDateConfirmModal;
+    _selectedRecommendedDate = _stateService.selectedRecommendedDate;
+    _isDateConfirmed = _stateService.isDateConfirmed;
     // 샘플 데이터는 MainMenuScreen에서만 초기화 (백엔드 연동 전 테스트용)
     // 여기서는 자동 생성하지 않음
     _currentTripRoom = _tripRoomService.currentTripRoom;
@@ -141,7 +134,7 @@ class _TripPlanDateScreenState extends State<TripPlanDateScreen> {
                   Navigator.pushReplacement(
                     context,
                     PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const ProfileEditScreen(),
+                      pageBuilder: (context, animation, secondaryAnimation) => const MypageScreen(),
                       transitionDuration: Duration.zero,
                       reverseTransitionDuration: Duration.zero,
                     ),
@@ -210,7 +203,7 @@ class _TripPlanDateScreenState extends State<TripPlanDateScreen> {
                   Navigator.pushReplacement(
                     context,
                     PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const ProfileEditScreen(),
+                      pageBuilder: (context, animation, secondaryAnimation) => const MypageScreen(),
                       transitionDuration: Duration.zero,
                       reverseTransitionDuration: Duration.zero,
                     ),
@@ -268,7 +261,7 @@ class _TripPlanDateScreenState extends State<TripPlanDateScreen> {
                   Navigator.pushReplacement(
                     context,
                     PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const ProfileEditScreen(),
+                      pageBuilder: (context, animation, secondaryAnimation) => const MypageScreen(),
                       transitionDuration: Duration.zero,
                       reverseTransitionDuration: Duration.zero,
                     ),
@@ -299,6 +292,8 @@ class _TripPlanDateScreenState extends State<TripPlanDateScreen> {
                         setState(() {
                           selectedSubTabIndex = index;
                         });
+                        // 탭 변경 시 해당 화면으로 이동
+                        _navigateToSubTab(index);
                       },
                     ),
 
@@ -359,7 +354,7 @@ class _TripPlanDateScreenState extends State<TripPlanDateScreen> {
                 size: 24,
                 color: Colors.black,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               const Text(
                 '내 가능 날짜 추가',
                 style: TextStyle(
@@ -388,7 +383,7 @@ class _TripPlanDateScreenState extends State<TripPlanDateScreen> {
                     height: 24,
                     fit: BoxFit.contain,
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   Text(
                     selectedDateRanges.isEmpty ? '캘린더에서 날짜 선택' : '${selectedDateRanges.length}개의 날짜 기간 선택됨',
                     style: const TextStyle(
@@ -550,7 +545,9 @@ class _TripPlanDateScreenState extends State<TripPlanDateScreen> {
                 }
                 date['isSelected'] = true;
                 _selectedRecommendedDate = date;
+                _stateService.selectedRecommendedDate = date;
                 _showDateConfirmModal = true; // 7-2 모달 표시
+                _stateService.showDateConfirmModal = true;
               });
             } : null,
             child: Container(
@@ -845,8 +842,10 @@ class _TripPlanDateScreenState extends State<TripPlanDateScreen> {
                           }
 
                           setState(() {
-                            _showDateConfirmModal = false;
-                            _isDateConfirmed = true; // 7-3 화면 표시
+                        _showDateConfirmModal = false;
+                        _stateService.showDateConfirmModal = false;
+                        _isDateConfirmed = true; // 7-3 화면 표시
+                        _stateService.isDateConfirmed = true;
                           });
                         },
                         child: Container(
@@ -875,6 +874,7 @@ class _TripPlanDateScreenState extends State<TripPlanDateScreen> {
                         onTap: () {
                           setState(() {
                             _showDateConfirmModal = false;
+                            _stateService.showDateConfirmModal = false;
                           });
                         },
                         child: Container(
@@ -921,116 +921,128 @@ class _TripPlanDateScreenState extends State<TripPlanDateScreen> {
             dDay: _currentTripRoom?.dDay ?? "D-?",
           ),
         ),
-
-        // 7-3 콘텐츠 (중앙 정렬)
-        Container(
-          width: 369 * scale,
-          margin: EdgeInsets.symmetric(horizontal: 16.5 * scale, vertical: 20 * scale), // 상하 여백 추가
-          padding: EdgeInsets.all(20 * scale),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFF5F5),
-            borderRadius: BorderRadius.circular(12 * scale),
-            border: Border.all(
-              color: const Color(0x801A0802),
-              width: 1,
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 체크 아이콘
-              Container(
-                width: 85 * scale,
-                height: 85 * scale,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFFFC5858).withOpacity(0.5), // withValues 대신 withOpacity 사용
-                ),
-                child: Icon(
-                  Icons.check_circle,
-                  size: 85 * scale,
-                  color: const Color(0xFFFC5858),
+        // 하위 탭 네비게이션 (확정 화면에서도 유지)
+        TabNavigation(
+          selectedIndex: selectedSubTabIndex,
+          onTap: (index) {
+            setState(() {
+              selectedSubTabIndex = index;
+            });
+            _navigateToSubTab(index);
+          },
+        ),
+        Expanded(
+          child: SingleChildScrollView(
+            child: Container(
+              width: 369 * scale,
+              margin: EdgeInsets.symmetric(horizontal: 16.5 * scale, vertical: 20 * scale),
+              padding: EdgeInsets.all(20 * scale),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF5F5),
+                borderRadius: BorderRadius.circular(12 * scale),
+                border: Border.all(
+                  color: const Color(0x801A0802),
+                  width: 1,
                 ),
               ),
-              SizedBox(height: 20 * scale),
-              // 제목
-              Text(
-                '여행 날짜가 확정되었습니다!',
-                style: TextStyle(
-                  fontSize: 26 * scale,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.black,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 10 * scale),
-              // 날짜 정보
-              Text(
-                dateRange,
-                style: TextStyle(
-                  fontSize: 18 * scale,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.black,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 8 * scale),
-              // 여행 기간
-              Text(
-                '2박 3일 여행',
-                style: TextStyle(
-                  fontSize: 16 * scale,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.black,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 25 * scale),
-              // 날짜 수정 버튼
-              GestureDetector(
-                onTap: () {
-                  // 날짜를 초기화하여 D-?로 설정
-                  if (_currentTripRoom != null) {
-                    _tripRoomService.updateTripDates(
-                      _currentTripRoom!.id,
-                      null, // startDate 초기화
-                      null, // endDate 초기화
-                    );
-                    _currentTripRoom = _tripRoomService.currentTripRoom;
-                  }
-                  setState(() {
-                    _isDateConfirmed = false;
-                    _showDateConfirmModal = false;
-                    _selectedRecommendedDate = null; // 선택된 추천 날짜도 초기화
-                    selectedDateRanges.clear(); // 선택된 날짜 범위도 초기화
-                  });
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 20 * scale, vertical: 6 * scale),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFFCFC),
-                    borderRadius: BorderRadius.circular(6 * scale),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x40000000), // 25% 투명도의 검은색
-                        offset: Offset(4, 4),
-                        blurRadius: 4,
-                        spreadRadius: 0,
-                        blurStyle: BlurStyle.inner,
-                      ),
-                    ],
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 85 * scale,
+                    height: 85 * scale,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFFFC5858).withOpacity(0.5),
+                    ),
+                    child: Icon(
+                      Icons.check_circle,
+                      size: 85 * scale,
+                      color: const Color(0xFFFC5858),
+                    ),
                   ),
-                  child: Text(
-                    '날짜 수정',
+                  SizedBox(height: 20 * scale),
+                  Text(
+                    '여행 날짜가 확정되었습니다!',
+                    style: TextStyle(
+                      fontSize: 26 * scale,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 10 * scale),
+                  Text(
+                    dateRange,
+                    style: TextStyle(
+                      fontSize: 18 * scale,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 8 * scale),
+                  Text(
+                    '2박 3일 여행',
                     style: TextStyle(
                       fontSize: 16 * scale,
                       fontWeight: FontWeight.w400,
                       color: Colors.black,
                     ),
+                    textAlign: TextAlign.center,
                   ),
-                ),
+                  SizedBox(height: 25 * scale),
+                  GestureDetector(
+                    onTap: () {
+                      if (_currentTripRoom != null) {
+                        _tripRoomService.updateTripDates(
+                          _currentTripRoom!.id,
+                          null,
+                          null,
+                        );
+                        _currentTripRoom = _tripRoomService.currentTripRoom;
+                      }
+                      setState(() {
+                        _isDateConfirmed = false;
+                      _stateService.isDateConfirmed = false;
+                      _showDateConfirmModal = false;
+                      _stateService.showDateConfirmModal = false;
+                      _selectedRecommendedDate = null;
+                      _stateService.selectedRecommendedDate = null;
+                        selectedDateRanges.clear();
+                      for (final date in recommendedDates) {
+                        date['isSelected'] = false;
+                      }
+                      });
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 20 * scale, vertical: 6 * scale),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFFCFC),
+                        borderRadius: BorderRadius.circular(6 * scale),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x40000000),
+                            offset: Offset(4, 4),
+                            blurRadius: 4,
+                            spreadRadius: 0,
+                            blurStyle: BlurStyle.inner,
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        '날짜 수정',
+                        style: TextStyle(
+                          fontSize: 16 * scale,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ],
@@ -1113,5 +1125,53 @@ class _TripPlanDateScreenState extends State<TripPlanDateScreen> {
         ),
       ),
     );
+  }
+
+  void _navigateToSubTab(int index) {
+    switch (index) {
+      case 0: // 날짜
+        // 현재 페이지
+        break;
+      case 1: // 후보지
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => const TripPlanCandidatesScreen(),
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+          ),
+        );
+        break;
+      case 2: // 일정표
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => const TripPlanScheduleScreen(),
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+          ),
+        );
+        break;
+      case 3: // 예산
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => const TripPlanBudgetScreen(),
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+          ),
+        );
+        break;
+      case 4: // 체크리스트
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => const TripPlanChecklistScreen(),
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+          ),
+        );
+        break;
+    }
   }
 }

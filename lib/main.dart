@@ -5,7 +5,7 @@ import 'screens/travel_preference_screen.dart';
 import 'screens/main_menu_screen.dart';
 import 'screens/tripplan_date_screen.dart';
 import 'screens/community_screen.dart';
-import 'screens/profile_edit_screen.dart';
+import 'screens/edit_profile_screen.dart';
 import 'screens/post_detail_screen.dart';
 import 'screens/new_write_screen.dart';
 import 'screens/newplan_screen.dart';
@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
         '/main': (context) => const MainMenuScreen(),
         '/date': (context) => const TripPlanDateScreen(),
         '/community': (context) => const CommunityScreen(),
-        '/profile': (context) => const ProfileEditScreen(),
+        '/profile': (context) => const EditProfileScreen(),
         '/newplan': (context) => const NewPlanScreen(),
         '/newwrite': (context) => const NewWriteScreen(),
         // '/post/:id' - PostDetailScreen은 매개변수가 필요하므로 직접 Navigator.push 사용

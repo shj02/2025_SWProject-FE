@@ -5,7 +5,7 @@ import '../widgets/sidebar.dart';
 import 'newplan_screen.dart';
 import 'tripplan_date_screen.dart';
 import 'community_screen.dart';
-import 'profile_edit_screen.dart';
+import 'edit_profile_screen.dart';
 import '../models/trip_room.dart';
 import '../services/trip_room_service.dart';
 
@@ -95,7 +95,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
         Navigator.pushReplacement(
           context,
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => const ProfileEditScreen(),
+            pageBuilder: (context, animation, secondaryAnimation) => const EditProfileScreen(),
             transitionDuration: Duration.zero,
             reverseTransitionDuration: Duration.zero,
           ),

@@ -4,7 +4,7 @@ import 'new_write_screen.dart';
 import 'post_detail_screen.dart';
 import 'main_menu_screen.dart';
 import 'tripplan_date_screen.dart';
-import 'profile_edit_screen.dart';
+import 'edit_profile_screen.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -84,7 +84,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
               Navigator.pushReplacement(
                 context,
                 PageRouteBuilder(
-                  pageBuilder: (context, animation, secondaryAnimation) => const ProfileEditScreen(),
+                  pageBuilder: (context, animation, secondaryAnimation) => const EditProfileScreen(),
                   transitionDuration: Duration.zero,
                   reverseTransitionDuration: Duration.zero,
                 ),

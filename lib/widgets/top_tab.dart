@@ -23,6 +23,8 @@ class TopTab extends StatelessWidget {
     final double scale = screenSize.width / designWidth;
 
     const double containerHeight = 135;
+    const double dDayContainerWidth = 120;
+    const double dDayContainerHeight = 52;
 
     return Container(
       width: double.infinity,
@@ -36,11 +38,11 @@ class TopTab extends StatelessWidget {
         children: [
           // D-Day 배경
           Positioned(
-            left: (402 - 99 - 15) * scale,
-            top: ((containerHeight - 52) / 2) * scale,
+            left: (402 - dDayContainerWidth - 15) * scale,
+            top: ((containerHeight - dDayContainerHeight) / 2) * scale,
             child: Container(
-              width: 100 * scale,
-              height: 52 * scale,
+              width: dDayContainerWidth * scale,
+              height: dDayContainerHeight * scale,
               decoration: ShapeDecoration(
                 color: const Color(0xFFFFC9C9),
                 shape: RoundedRectangleBorder(
@@ -59,7 +61,7 @@ class TopTab extends StatelessWidget {
           ),
           // D-Day 텍스트
           Positioned(
-            left: (402 - 99 - 15) * scale,
+            left: (402 - dDayContainerWidth - 15) * scale,
             top: 0,
             right: 15 * scale,
             bottom: 0,
@@ -70,7 +72,7 @@ class TopTab extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.black,
-                  fontSize: 37.71 * scale,
+                  fontSize: 35 * scale,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -80,7 +82,7 @@ class TopTab extends StatelessWidget {
           // --- 제목과 참여인원 (수정된 부분) ---
           Positioned.fill(
             left: 15 * scale,
-            right: (99 + 15) * scale, // D-Day 영역을 침범하지 않도록 오른쪽 여백 설정
+            right: (dDayContainerWidth + 15) * scale, // D-Day 영역을 침범하지 않도록 오른쪽 여백 설정
             top: ((containerHeight - 70) / 2) * scale,
             child: Align(
               alignment: Alignment.centerLeft, // 좌측 정렬을 기준으로 중앙에 배치
