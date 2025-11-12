@@ -68,5 +68,15 @@ class TripPlanBudgetStateService {
   void addExpense(ExpenseEntry entry) {
     expenses.insert(0, entry);
   }
+
+  void markExpensesSettled(Iterable<String> ids) {
+    final Set<String> targetIds = ids.toSet();
+    for (int i = 0; i < expenses.length; i++) {
+      final ExpenseEntry entry = expenses[i];
+      if (targetIds.contains(entry.id)) {
+        expenses[i] = entry.copyWith(isSettled: true);
+      }
+    }
+  }
 }
 

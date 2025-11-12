@@ -5,6 +5,7 @@ import '../models/budget_models.dart';
 import '../models/trip_room.dart';
 import '../services/trip_room_service.dart';
 import '../services/trip_plan_budget_state_service.dart';
+import '../services/trip_plan_state_service.dart';
 import '../services/user_service.dart';
 import '../widgets/custom_navbar.dart';
 import '../widgets/tab_navigation.dart';
@@ -16,6 +17,9 @@ import 'tripplan_date_screen.dart';
 import 'tripplan_schedule_screen.dart';
 import 'community_screen.dart';
 import 'mypage_screen.dart';
+
+const Color _kPrimaryTextColor = Color(0xFF1A0802);
+const Color _kAccentColor = Color(0xFFFF8282);
 
 class TripPlanBudgetScreen extends StatefulWidget {
   const TripPlanBudgetScreen({super.key});
@@ -32,6 +36,7 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
 
   late final TripRoomService _tripRoomService;
   late final TripPlanBudgetStateService _budgetStateService;
+  late final TripPlanStateService _stateService;
   late final UserService _userService;
   TripRoom? _currentTripRoom;
 
@@ -46,6 +51,7 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
     super.initState();
     _tripRoomService = TripRoomService();
     _budgetStateService = TripPlanBudgetStateService();
+    _stateService = TripPlanStateService();
     _userService = UserService();
     _currentTripRoom = _tripRoomService.currentTripRoom;
 
@@ -64,7 +70,39 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
     final double scale = screenSize.width / _designWidth;
 
     if (_tripRoomService.tripRooms.isEmpty || _currentTripRoom == null) {
-      return AnnotatedRegion<SystemUiOverlayStyle>(
+      return WillPopScope(
+        onWillPop: _handleWillPop,
+        child: AnnotatedRegion<SystemUiOverlayStyle>(
+          value: const SystemUiOverlayStyle(
+            statusBarColor: Color(0xFFFFF5F5),
+            systemNavigationBarColor: Color(0xFFFFFCFC),
+          ),
+          child: Scaffold(
+            backgroundColor: const Color(0xFFFFFCFC),
+            bottomNavigationBar: CustomNavbar(
+              currentIndex: _currentNavbarIndex,
+              onTap: _handleNavbarTap,
+            ),
+            body: SafeArea(
+              child: Center(
+                child: Text(
+                  '계획중인 여행이 없습니다.',
+                  style: TextStyle(
+                    fontSize: 20 * scale,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF1A0802),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return WillPopScope(
+      onWillPop: _handleWillPop,
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: const SystemUiOverlayStyle(
           statusBarColor: Color(0xFFFFF5F5),
           systemNavigationBarColor: Color(0xFFFFFCFC),
@@ -76,72 +114,46 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
             onTap: _handleNavbarTap,
           ),
           body: SafeArea(
-            child: Center(
-              child: Text(
-                '계획중인 여행이 없습니다.',
-                style: TextStyle(
-                  fontSize: 20 * scale,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF1A0802),
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Color(0xFFFFF5F5),
-        systemNavigationBarColor: Color(0xFFFFFCFC),
-      ),
-      child: Scaffold(
-        backgroundColor: const Color(0xFFFFFCFC),
-        bottomNavigationBar: CustomNavbar(
-          currentIndex: _currentNavbarIndex,
-          onTap: _handleNavbarTap,
-        ),
-        body: SafeArea(
-          child: Column(
-            children: [
-              GestureDetector(
-                onTap: _showTripRoomSelector,
-                child: TopTab(
-                  title: _currentTripRoom?.title ?? '여행방을 선택해주세요',
-                  participantCount: _currentTripRoom?.participantCount ?? 0,
-                  dDay: _currentTripRoom?.dDay ?? 'D-?',
-                ),
-              ),
-              TabNavigation(
-                selectedIndex: _selectedSubTabIndex,
-                onTap: (index) {
-                  if (_selectedSubTabIndex == index) return;
-                  setState(() {
-                    _selectedSubTabIndex = index;
-                  });
-                  _navigateToSubTab(index);
-                },
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: EdgeInsets.symmetric(horizontal: 17 * scale, vertical: 16 * scale),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildBudgetSummary(scale),
-                      SizedBox(height: 16 * scale),
-                      _buildPersonalBudgetSection(scale),
-                      SizedBox(height: 16 * scale),
-                      _buildExpenseSection(scale),
-                      SizedBox(height: 16 * scale),
-                      _buildSettlementSection(scale),
-                    ],
+            child: Column(
+              children: [
+                GestureDetector(
+                  onTap: _showTripRoomSelector,
+                  child: TopTab(
+                    title: _currentTripRoom?.title ?? '여행방을 선택해주세요',
+                    participantCount: _currentTripRoom?.participantCount ?? 0,
+                    dDay: _currentTripRoom?.dDay ?? 'D-?',
                   ),
                 ),
-              ),
-            ],
+                TabNavigation(
+                  selectedIndex: _selectedSubTabIndex,
+                  onTap: (index) {
+                    if (_selectedSubTabIndex == index) return;
+                    setState(() {
+                      _selectedSubTabIndex = index;
+                    });
+                    _navigateToSubTab(index);
+                  },
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.symmetric(horizontal: 17 * scale, vertical: 16 * scale),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildBudgetSummary(scale),
+                        SizedBox(height: 16 * scale),
+                        _buildPersonalBudgetSection(scale),
+                        SizedBox(height: 16 * scale),
+                        _buildExpenseSection(scale),
+                        SizedBox(height: 16 * scale),
+                        _buildSettlementSection(scale),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -157,7 +169,7 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
     final double remaining = _totalBudgetAmount - _totalUsedAmount;
 
     return Container(
-      padding: EdgeInsets.all(20 * scale),
+      padding: EdgeInsets.all(16 * scale),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF5F5),
         borderRadius: BorderRadius.circular(12 * scale),
@@ -168,14 +180,19 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.pie_chart_outline, size: 22 * scale, color: const Color(0xFF1A0802)),
-              SizedBox(width: 10 * scale),
+              Image.asset(
+                'assets/icons/pie_chart.png', // 아이콘 경로를 이미지 경로로 변경
+                width: 24 * scale,             // width로 크기 지정
+                height: 24 * scale,            // height로 크기 지정
+                color: _kPrimaryTextColor,  // 이미지에 색상 오버레이 적용
+              ),
+              SizedBox(width: 7 * scale),
               Text(
                 '전체 예산 현황',
                 style: TextStyle(
                   fontSize: 20 * scale,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black,
+                  fontWeight: FontWeight.w400,
+                  color: _kPrimaryTextColor,
                 ),
               ),
             ],
@@ -189,7 +206,7 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
                   style: TextStyle(
                     fontSize: 26 * scale,
                     fontWeight: FontWeight.w700,
-                    color: Colors.black,
+                    color: _kPrimaryTextColor,
                   ),
                 ),
                 SizedBox(height: 6 * scale),
@@ -198,7 +215,7 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
                   style: TextStyle(
                     fontSize: 16 * scale,
                     fontWeight: FontWeight.w500,
-                    color: Colors.black.withOpacity(0.8),
+                    color: _kPrimaryTextColor.withOpacity(0.8),
                   ),
                 ),
               ],
@@ -211,7 +228,7 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
               value: progress,
               minHeight: 15 * scale,
               backgroundColor: const Color(0xFFF0F3F8),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFF8282)),
+              valueColor: const AlwaysStoppedAnimation<Color>(_kAccentColor),
             ),
           ),
           SizedBox(height: 10 * scale),
@@ -223,7 +240,7 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
                 style: TextStyle(
                   fontSize: 12 * scale,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black,
+                  color: _kPrimaryTextColor,
                 ),
               ),
               Text(
@@ -233,7 +250,7 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
                 style: TextStyle(
                   fontSize: 12 * scale,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black,
+                  color: _kPrimaryTextColor,
                 ),
               ),
             ],
@@ -245,7 +262,7 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
 
   Widget _buildPersonalBudgetSection(double scale) {
     return Container(
-      padding: EdgeInsets.all(20 * scale),
+      padding: EdgeInsets.all(16 * scale),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF5F5),
         borderRadius: BorderRadius.circular(12 * scale),
@@ -259,30 +276,34 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.person_outline, size: 20 * scale, color: const Color(0xFF1A0802)),
-                  SizedBox(width: 10 * scale),
+                  Icon(Icons.person_outline, size: 24 * scale, color: const Color(0xFF1A0802)),
+                  SizedBox(width: 7 * scale),
                   Text(
                     '개인별 예산',
                     style: TextStyle(
-                      fontSize: 18 * scale,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
+                      fontSize: 20 * scale,
+                      fontWeight: FontWeight.w400,
+                  color: _kPrimaryTextColor,
                     ),
                   ),
                 ],
               ),
-              TextButton.icon(
+              ElevatedButton.icon(
                 onPressed: _openAddPersonalBudget,
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 6 * scale),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF8282), // 1. 배경색 추가
+                  foregroundColor: Colors.white,             // 2. 아이콘/텍스트 색상 변경
+                  padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 2 * scale),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6 * scale), // 3. 둥근 모서리 적용
+                  ),
                 ),
-                icon: Icon(Icons.add_circle_outline, size: 16 * scale, color: const Color(0xFF1A0802)),
+                icon: Icon(Icons.add_circle_outline, size: 16 * scale, color: Colors.white),
                 label: Text(
                   '내 예산 추가',
                   style: TextStyle(
-                    fontSize: 15 * scale,
+                    fontSize: 15 * scale, // 폰트 크기를 '지출 추가'와 동일하게 맞춤
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1A0802),
                   ),
                 ),
               ),
@@ -318,7 +339,7 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
         .toList();
 
     return Container(
-      padding: EdgeInsets.all(20 * scale),
+      padding: EdgeInsets.all(16 * scale),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF5F5),
         borderRadius: BorderRadius.circular(12 * scale),
@@ -332,14 +353,14 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.credit_card, size: 20 * scale, color: const Color(0xFF1A0802)),
-                  SizedBox(width: 10 * scale),
+                  Icon(Icons.credit_card, size: 24 * scale, color: const Color(0xFF1A0802)),
+                  SizedBox(width: 7 * scale),
                   Text(
                     '지출 기록',
                     style: TextStyle(
-                      fontSize: 18 * scale,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
+                      fontSize: 20 * scale,
+                      fontWeight: FontWeight.w400,
+                  color: _kPrimaryTextColor,
                     ),
                   ),
                 ],
@@ -349,7 +370,7 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
                 style: TextButton.styleFrom(
                   backgroundColor: const Color(0xFFFF8282),
                   foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 6 * scale),
+                  padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 4 * scale),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(6 * scale),
                   ),
@@ -372,8 +393,8 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
               child: Text(
                 '표시할 지출이 없습니다.',
                 style: TextStyle(
-                  fontSize: 14 * scale,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 15 * scale,
+                  fontWeight: FontWeight.w400,
                   color: const Color(0xFF5D6470),
                 ),
               ),
@@ -396,7 +417,7 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
 
   Widget _buildSettlementSection(double scale) {
     final List<ExpenseEntry> sharedExpenses =
-        _expenses.where((expense) => expense.isShared).toList();
+        _expenses.where((expense) => expense.isShared && !expense.isSettled).toList();
     final double sharedTotal =
         sharedExpenses.fold(0.0, (sum, expense) => sum + expense.amount);
     final Set<String> sharedParticipants = {
@@ -406,7 +427,7 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
         sharedParticipants.isEmpty ? 0 : sharedTotal / sharedParticipants.length;
 
     return Container(
-      padding: EdgeInsets.all(20 * scale),
+      padding: EdgeInsets.all(16 * scale),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF5F5),
         borderRadius: BorderRadius.circular(12 * scale),
@@ -417,14 +438,14 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.receipt_long_outlined, size: 20 * scale, color: const Color(0xFF1A0802)),
-              SizedBox(width: 10 * scale),
+              Icon(Icons.receipt_long_outlined, size: 24 * scale, color: const Color(0xFF1A0802)),
+              SizedBox(width: 7 * scale),
               Text(
                 '정산하기',
                 style: TextStyle(
-                  fontSize: 18 * scale,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black,
+                  fontSize: 20 * scale,
+                  fontWeight: FontWeight.w400,
+                  color: _kPrimaryTextColor,
                 ),
               ),
             ],
@@ -446,9 +467,9 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
                     Text(
                       '정산 대기 중인 공용 지출',
                       style: TextStyle(
-                        fontSize: 16 * scale,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
+                        fontSize: 18 * scale,
+                        fontWeight: FontWeight.w400,
+                        color: _kPrimaryTextColor,
                       ),
                     ),
                     Container(
@@ -468,21 +489,21 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
                     ),
                   ],
                 ),
-                SizedBox(height: 10 * scale),
+                SizedBox(height: 4 * scale),
                 Text(
                   '₩${_formatCurrency(sharedTotal)}',
                   style: TextStyle(
-                    fontSize: 20 * scale,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
+                    fontSize: 18 * scale,
+                    fontWeight: FontWeight.w600,
+                    color: _kPrimaryTextColor,
                   ),
                 ),
                 SizedBox(height: 6 * scale),
                 Text(
                   '1인당 ₩${_formatCurrency(perPerson)}',
                   style: TextStyle(
-                    fontSize: 13 * scale,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 14 * scale,
+                    fontWeight: FontWeight.w400,
                     color: const Color(0xFF5D6470),
                   ),
                 ),
@@ -492,21 +513,25 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
           SizedBox(height: 12 * scale),
           SizedBox(
             width: double.infinity,
-            child: OutlinedButton.icon(
+            child: ElevatedButton.icon(
               onPressed:
                   sharedExpenses.isEmpty ? null : () => _openSettlementDialog(sharedExpenses),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFFFD9797), width: 1.2),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _kAccentColor,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: const Color(0xFFFFC9C9),
+                disabledForegroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12 * scale),
                 ),
                 padding: EdgeInsets.symmetric(vertical: 12 * scale),
                 textStyle: TextStyle(
                   fontSize: 18 * scale,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'YeongdeokSea',
                 ),
               ),
-              icon: Icon(Icons.receipt, size: 20 * scale, color: const Color(0xFF1A0802)),
+              icon: Icon(Icons.receipt_long_outlined, size: 20 * scale, color: Colors.white),
               label: const Text('정산 계산하기'),
             ),
           ),
@@ -537,6 +562,7 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
       if (total == null) return;
       setState(() {
         _budgetStateService.upsertPersonalBudget(userName, total);
+        _stateService.markBudgetForMember(_currentTripRoom?.id ?? '', userName);
         _recalculateUsage();
       });
     });
@@ -560,14 +586,16 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
     ).then((result) {
       if (result == null) return;
       setState(() {
-        _budgetStateService.addExpense(result);
+    _budgetStateService.addExpense(result);
+    final bool hasBudget =
+        _personalBudgets.every((budget) => budget.total > 0);
         _recalculateUsage();
       });
     });
   }
 
   void _openSettlementDialog(List<ExpenseEntry> sharedExpenses) {
-    showModalBottomSheet<void>(
+    showModalBottomSheet<Set<String>?>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -575,7 +603,14 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
         expenses: sharedExpenses,
         participants: _currentTripRoom?.participants ?? [],
       ),
-    );
+    ).then((settledIds) {
+      if (settledIds == null || settledIds.isEmpty) return;
+      setState(() {
+        _budgetStateService.markExpensesSettled(settledIds);
+        _expenses = _budgetStateService.expenses;
+        _recalculateUsage();
+      });
+    });
   }
 
   void _handleNavbarTap(int index) {
@@ -679,7 +714,7 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
-                        color: isSelected ? const Color(0xFFFFA0A0) : Colors.black,
+                        color: isSelected ? const Color(0xFFFFA0A0) : _kPrimaryTextColor,
                       ),
                     ),
                     subtitle: Text(
@@ -744,6 +779,7 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
       0.0,
       (sum, budget) => sum + (usage[budget.memberName] ?? 0),
     );
+
   }
 
   String _formatCurrency(double value) {
@@ -752,6 +788,8 @@ class _TripPlanBudgetScreenState extends State<TripPlanBudgetScreen> {
       (match) => ',',
     );
   }
+
+  Future<bool> _handleWillPop() async => false;
 }
 
 class _PersonalBudgetTile extends StatelessWidget {
@@ -785,7 +823,7 @@ class _PersonalBudgetTile extends StatelessWidget {
             style: TextStyle(
               fontSize: 18 * scale,
               fontWeight: FontWeight.w700,
-              color: Colors.black,
+              color: _kPrimaryTextColor,
             ),
           ),
           SizedBox(height: 10 * scale),
@@ -795,7 +833,7 @@ class _PersonalBudgetTile extends StatelessWidget {
               value: progress,
               minHeight: 6 * scale,
               backgroundColor: const Color(0xFFF0F3F8),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF2564DF)),
+              valueColor: const AlwaysStoppedAnimation<Color>(_kAccentColor),
             ),
           ),
           SizedBox(height: 8 * scale),
@@ -807,7 +845,7 @@ class _PersonalBudgetTile extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12 * scale,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black,
+                  color: _kPrimaryTextColor,
                 ),
               ),
               Text(
@@ -815,7 +853,7 @@ class _PersonalBudgetTile extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12 * scale,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black,
+                  color: _kPrimaryTextColor,
                 ),
               ),
             ],
@@ -876,7 +914,7 @@ class _ExpenseTile extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 18 * scale,
                               fontWeight: FontWeight.w700,
-                              color: Colors.black,
+                          color: _kPrimaryTextColor,
                             ),
                           ),
                         ),
@@ -951,7 +989,7 @@ class _ExpenseTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16 * scale,
                       fontWeight: FontWeight.w700,
-                      color: Colors.black,
+                    color: _kPrimaryTextColor,
                     ),
                   ),
                   SizedBox(height: 6 * scale),
@@ -1060,7 +1098,7 @@ class _PersonalBudgetSheetState extends State<PersonalBudgetSheet> {
               style: TextStyle(
                 fontSize: 22 * scale,
                 fontWeight: FontWeight.w700,
-                color: Colors.black,
+                color: _kPrimaryTextColor,
               ),
             ),
             SizedBox(height: 16 * scale),
@@ -1078,7 +1116,7 @@ class _PersonalBudgetSheetState extends State<PersonalBudgetSheet> {
                 style: TextStyle(
                   fontSize: 16 * scale,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black,
+                  color: _kPrimaryTextColor,
                 ),
               ),
             ),
@@ -1096,15 +1134,16 @@ class _PersonalBudgetSheetState extends State<PersonalBudgetSheet> {
               child: ElevatedButton(
                 onPressed: _onSubmit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFC5858),
+                  backgroundColor: const Color(0xFFFF8282),
                   foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 14 * scale),
+                  padding: EdgeInsets.symmetric(vertical: 12 * scale),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12 * scale),
                   ),
                   textStyle: TextStyle(
-                    fontSize: 18 * scale,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 20 * scale,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'YeongdeokSea', // 1. main.dart에 설정된 폰트를 여기서도 사용하겠다고 명시
                   ),
                 ),
                 child: const Text('저장'),
@@ -1118,9 +1157,7 @@ class _PersonalBudgetSheetState extends State<PersonalBudgetSheet> {
 
   void _onSubmit() {
     if (_totalController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('예산 금액을 입력해주세요.')),
-      );
+      _showValidationDialog('예산 금액을 입력해주세요.');
       return;
     }
 
@@ -1136,7 +1173,7 @@ class _PersonalBudgetSheetState extends State<PersonalBudgetSheet> {
       style: TextStyle(
         fontSize: 16 * scale,
         fontWeight: FontWeight.w700,
-        color: Colors.black,
+        color: _kPrimaryTextColor,
       ),
     );
   }
@@ -1150,6 +1187,11 @@ class _PersonalBudgetSheetState extends State<PersonalBudgetSheet> {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
+      style: TextStyle(
+        fontSize: 16 * scale,
+        fontWeight: FontWeight.w500,
+        color: _kPrimaryTextColor,
+      ),
       decoration: InputDecoration(
         hintText: hint,
         contentPadding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 12 * scale),
@@ -1162,6 +1204,48 @@ class _PersonalBudgetSheetState extends State<PersonalBudgetSheet> {
           borderSide: const BorderSide(color: Color(0xFFFC5858), width: 2),
         ),
       ),
+    );
+  }
+
+  void _showValidationDialog(String message) {
+    final double scale = MediaQuery.of(context).size.width / _TripPlanBudgetScreenState._designWidth;
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12 * scale)),
+          title: Text(
+            '알림',
+            style: TextStyle(
+              fontSize: 20 * scale,
+              fontWeight: FontWeight.w700,
+              color: _kPrimaryTextColor,
+            ),
+          ),
+          content: Text(
+            message,
+            style: TextStyle(
+              fontSize: 16 * scale,
+              fontWeight: FontWeight.w500,
+              color: _kPrimaryTextColor,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                '확인',
+                style: TextStyle(
+                  fontSize: 16 * scale,
+                  fontWeight: FontWeight.w600,
+                  color: _kPrimaryTextColor,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -1251,7 +1335,7 @@ class _ExpenseEditorSheetState extends State<ExpenseEditorSheet> {
               style: TextStyle(
                 fontSize: 22 * scale,
                 fontWeight: FontWeight.w700,
-                color: Colors.black,
+                color: _kPrimaryTextColor,
               ),
             ),
             SizedBox(height: 16 * scale),
@@ -1259,7 +1343,7 @@ class _ExpenseEditorSheetState extends State<ExpenseEditorSheet> {
             _buildTextField(_titleController, '예) 숙소 예약', scale),
             SizedBox(height: 16 * scale),
             _buildLabel('금액 (원)', scale),
-            _buildTextField(_amountController, '300000', scale, keyboardType: TextInputType.number),
+            _buildTextField(_amountController, '예) 650000', scale, keyboardType: TextInputType.number),
             SizedBox(height: 16 * scale),
             _buildLabel('구분', scale),
             ToggleButtons(
@@ -1268,6 +1352,12 @@ class _ExpenseEditorSheetState extends State<ExpenseEditorSheet> {
                 _selectedCategory == ExpenseCategory.shared,
                 _selectedCategory == ExpenseCategory.personal,
               ],
+              color: const Color(0xFF8B8B8B), // 선택되지 않았을 때 텍스트 색상
+              selectedColor: Colors.white,      // 선택되었을 때 텍스트 색상
+              fillColor: const Color(0xFFFF8282), // 선택되었을 때 배경색
+              borderColor: const Color(0xFFD9D9D9),         // 테두리 색상
+              selectedBorderColor: const Color(0xFFFC5858), // 선택되었을 때 테두리 색상
+              constraints: BoxConstraints(minHeight: 40 * scale),
               onPressed: (index) {
                 setState(() {
                   final ExpenseCategory newCategory = ExpenseCategory.values[index];
@@ -1336,6 +1426,7 @@ class _ExpenseEditorSheetState extends State<ExpenseEditorSheet> {
                 children: _allParticipants.map((member) {
                   final bool checked = _selectedSharedParticipants.contains(member);
                   return CheckboxListTile(
+                    activeColor: const Color(0xFFFF8282),
                     dense: true,
                     contentPadding: EdgeInsets.zero,
                     controlAffinity: ListTileControlAffinity.leading,
@@ -1394,15 +1485,16 @@ class _ExpenseEditorSheetState extends State<ExpenseEditorSheet> {
               child: ElevatedButton(
                 onPressed: _onSubmit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFC5858),
+                  backgroundColor: const Color(0xFFFF8282),
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(vertical: 14 * scale),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12 * scale),
                   ),
                   textStyle: TextStyle(
-                    fontSize: 18 * scale,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 20 * scale,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'YeongdeokSea', // 1. main.dart에 설정된 폰트를 여기서도 사용하겠다고 명시
                   ),
                 ),
                 child: const Text('추가하기'),
@@ -1416,17 +1508,13 @@ class _ExpenseEditorSheetState extends State<ExpenseEditorSheet> {
 
   void _onSubmit() {
     if (_titleController.text.trim().isEmpty || _amountController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('필수 값을 입력해주세요.')),
-      );
+      _showValidationDialog('지출 항목과 금액을 입력해주세요.');
       return;
     }
 
     final double amount = double.tryParse(_amountController.text.replaceAll(',', '')) ?? 0;
     if (amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('금액을 올바르게 입력해주세요.')),
-      );
+      _showValidationDialog('금액을 올바르게 입력해주세요.');
       return;
     }
 
@@ -1435,15 +1523,11 @@ class _ExpenseEditorSheetState extends State<ExpenseEditorSheet> {
 
     if (_selectedCategory == ExpenseCategory.shared) {
       if (_selectedSharedParticipants.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('참여자를 한 명 이상 선택해주세요.')),
-        );
+        _showValidationDialog('공용 지출에 참여하는 멤버를 선택해주세요.');
         return;
       }
       if (_selectedPayer == null || !_selectedSharedParticipants.contains(_selectedPayer)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('결제자를 선택해주세요.')),
-        );
+        _showValidationDialog('결제자를 선택해주세요.');
         return;
       }
       participants = _selectedSharedParticipants.toList();
@@ -1474,7 +1558,7 @@ class _ExpenseEditorSheetState extends State<ExpenseEditorSheet> {
       style: TextStyle(
         fontSize: 16 * scale,
         fontWeight: FontWeight.w700,
-        color: Colors.black,
+        color: _kPrimaryTextColor,
       ),
     );
   }
@@ -1502,11 +1586,58 @@ class _ExpenseEditorSheetState extends State<ExpenseEditorSheet> {
           borderSide: const BorderSide(color: Color(0xFFFC5858), width: 2),
         ),
       ),
+      style: TextStyle(
+        fontSize: 16 * scale,
+        fontWeight: FontWeight.w500,
+        color: _kPrimaryTextColor,
+      ),
+    );
+  }
+
+  void _showValidationDialog(String message) {
+    final double scale = MediaQuery.of(context).size.width / _TripPlanBudgetScreenState._designWidth;
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12 * scale)),
+          title: Text(
+            '알림',
+            style: TextStyle(
+              fontSize: 20 * scale,
+              fontWeight: FontWeight.w700,
+              color: _kPrimaryTextColor,
+            ),
+          ),
+          content: Text(
+            message,
+            style: TextStyle(
+              fontSize: 16 * scale,
+              fontWeight: FontWeight.w500,
+              color: _kPrimaryTextColor,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                '확인',
+                style: TextStyle(
+                  fontSize: 16 * scale,
+                  fontWeight: FontWeight.w600,
+                  color: _kPrimaryTextColor,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
-class SettlementSheet extends StatelessWidget {
+class SettlementSheet extends StatefulWidget {
   const SettlementSheet({
     super.key,
     required this.expenses,
@@ -1517,10 +1648,41 @@ class SettlementSheet extends StatelessWidget {
   final List<String> participants;
 
   @override
+  State<SettlementSheet> createState() => _SettlementSheetState();
+}
+
+class _SettlementSheetState extends State<SettlementSheet> {
+  late Set<String> _selectedExpenseIds;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedExpenseIds = widget.expenses.map((expense) => expense.id).toSet();
+  }
+
+  List<ExpenseEntry> get _selectedExpenses => widget.expenses
+      .where((expense) => _selectedExpenseIds.contains(expense.id))
+      .toList();
+
+  @override
   Widget build(BuildContext context) {
-    final double scale = MediaQuery.of(context).size.width / _TripPlanBudgetScreenState._designWidth;
-    final double total = expenses.fold(0.0, (sum, expense) => sum + expense.amount);
-    final _SettlementResult settlementResult = _calculateSettlement();
+    final double scale = MediaQuery.of(context).size.width /
+        _TripPlanBudgetScreenState._designWidth;
+    final List<ExpenseEntry> selectedExpenses = _selectedExpenses;
+    final double total =
+        selectedExpenses.fold(0.0, (sum, expense) => sum + expense.amount);
+    final Set<String> selectedParticipants = {
+      for (final expense in selectedExpenses)
+        ...(expense.participants.isNotEmpty
+            ? expense.participants
+            : widget.participants),
+    }..removeWhere((name) => name.isEmpty);
+    final int participantCount = selectedParticipants.isEmpty
+        ? widget.participants.length
+        : selectedParticipants.length;
+    final double perPerson = participantCount == 0 ? 0 : total / participantCount;
+    final _SettlementResult settlementResult =
+        _calculateSettlement(selectedExpenses);
 
     return Container(
       decoration: const BoxDecoration(
@@ -1557,106 +1719,112 @@ class SettlementSheet extends StatelessWidget {
               style: TextStyle(
                 fontSize: 22 * scale,
                 fontWeight: FontWeight.w700,
-                color: Colors.black,
+                color: _kPrimaryTextColor,
               ),
             ),
             SizedBox(height: 16 * scale),
             Text(
-              '공용 지출 ${expenses.length}건',
+              '공용 지출 ${widget.expenses.length}건',
               style: TextStyle(
                 fontSize: 16 * scale,
                 fontWeight: FontWeight.w600,
-                color: Colors.black,
+                color: _kPrimaryTextColor,
               ),
             ),
-            SizedBox(height: 10 * scale),
-            ...expenses.map(
-              (expense) => Padding(
-                padding: EdgeInsets.only(bottom: 12 * scale),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            expense.title,
-                            style: TextStyle(
-                              fontSize: 14 * scale,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black,
-                            ),
-                          ),
-                          SizedBox(height: 4 * scale),
-                          Text(
-                            '결제자: ${expense.payer ?? '-'}',
-                            style: TextStyle(
-                              fontSize: 12 * scale,
-                              color: const Color(0xFF5D6470),
-                            ),
-                          ),
-                          SizedBox(height: 2 * scale),
-                          Text(
-                            '참여자: ${(expense.participants.isNotEmpty ? expense.participants : participants).join(', ')}',
-                            style: TextStyle(
-                              fontSize: 12 * scale,
-                              color: const Color(0xFF5D6470),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(width: 12 * scale),
-                    Text(
-                      '₩${_formatCurrency(expense.amount)}',
-                      style: TextStyle(
-                        fontSize: 14 * scale,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ],
+            SizedBox(height: 12 * scale),
+            ...widget.expenses.map((expense) {
+              final bool isSelected = _selectedExpenseIds.contains(expense.id);
+              final List<String> participants = expense.participants.isNotEmpty
+                  ? expense.participants
+                  : widget.participants;
+              return Container(
+                margin: EdgeInsets.only(bottom: 8 * scale),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12 * scale),
+                  border: Border.all(color: const Color(0xFFE6E6E6), width: 1),
                 ),
-              ),
-            ),
+                child: CheckboxListTile(
+                  value: isSelected,
+                  onChanged: (value) => _toggleExpense(expense.id, value),
+                  activeColor: _kAccentColor,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: Text(
+                    expense.title,
+                    style: TextStyle(
+                      fontSize: 16 * scale,
+                      fontWeight: FontWeight.w600,
+                      color: _kPrimaryTextColor,
+                    ),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '₩${_formatCurrency(expense.amount)} • 결제자: ${expense.payer ?? '-'}',
+                        style: TextStyle(
+                          fontSize: 12.5 * scale,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF5D6470),
+                        ),
+                      ),
+                      SizedBox(height: 2 * scale),
+                      Text(
+                        '참여자: ${participants.join(', ')}',
+                        style: TextStyle(
+                          fontSize: 12 * scale,
+                          fontWeight: FontWeight.w400,
+                          color: const Color(0xFF5D6470),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
             Divider(height: 24 * scale),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '총 공용 지출',
-                  style: TextStyle(
-                    fontSize: 16 * scale,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                  ),
-                ),
-                Text(
-                  '₩${_formatCurrency(total)}',
-                  style: TextStyle(
-                    fontSize: 16 * scale,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                  ),
-                ),
-              ],
+            Text(
+              '선택된 공용 지출 ${selectedExpenses.length}건',
+              style: TextStyle(
+                fontSize: 16 * scale,
+                fontWeight: FontWeight.w700,
+                color: _kPrimaryTextColor,
+              ),
             ),
-            SizedBox(height: 20 * scale),
+            SizedBox(height: 8 * scale),
+            Text(
+              '총액 ₩${_formatCurrency(total)} • 1인당 ₩${_formatCurrency(perPerson)}',
+              style: TextStyle(
+                fontSize: 14 * scale,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF5D6470),
+              ),
+            ),
+            SizedBox(height: 16 * scale),
             Text(
               '정산 요약',
               style: TextStyle(
                 fontSize: 16 * scale,
                 fontWeight: FontWeight.w700,
-                color: Colors.black,
+                color: _kPrimaryTextColor,
               ),
             ),
             SizedBox(height: 10 * scale),
-            if (settlementResult.entries.isEmpty)
+            if (selectedExpenses.isEmpty)
+              Text(
+                '정산할 공용 지출을 선택해주세요.',
+                style: TextStyle(
+                  fontSize: 14 * scale,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF5D6470),
+                ),
+              )
+            else if (settlementResult.entries.isEmpty)
               Text(
                 '정산할 금액이 없습니다.',
                 style: TextStyle(
                   fontSize: 14 * scale,
+                  fontWeight: FontWeight.w500,
                   color: const Color(0xFF5D6470),
                 ),
               )
@@ -1671,18 +1839,18 @@ class SettlementSheet extends StatelessWidget {
                         child: Text(
                           '${entry.from} → ${entry.to}',
                           style: TextStyle(
-                            fontSize: 14 * scale,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black,
+                            fontSize: 15 * scale,
+                            fontWeight: FontWeight.w400,
+                            color: _kPrimaryTextColor,
                           ),
                         ),
                       ),
                       Text(
                         '₩${_formatCurrency(entry.amount)}',
                         style: TextStyle(
-                          fontSize: 14 * scale,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFFFC5858),
+                          fontSize: 15 * scale,
+                          fontWeight: FontWeight.w600,
+                          color: _kPrimaryTextColor,
                         ),
                       ),
                     ],
@@ -1690,11 +1858,26 @@ class SettlementSheet extends StatelessWidget {
                 ),
               ),
             SizedBox(height: 24 * scale),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('닫기'),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: selectedExpenses.isEmpty ? null : _handleSettlement,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _kAccentColor,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: const Color(0xFFFFC9C9),
+                  disabledForegroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 12 * scale),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12 * scale),
+                  ),
+                  textStyle: TextStyle(
+                    fontSize: 20 * scale,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'YeongdeokSea',
+                  ),
+                ),
+                child: const Text('정산하기'),
               ),
             ),
           ],
@@ -1703,9 +1886,62 @@ class SettlementSheet extends StatelessWidget {
     );
   }
 
-  _SettlementResult _calculateSettlement() {
+  void _toggleExpense(String expenseId, bool? value) {
+    setState(() {
+      if (value == true) {
+        _selectedExpenseIds.add(expenseId);
+      } else {
+        _selectedExpenseIds.remove(expenseId);
+      }
+    });
+  }
+
+  Future<void> _handleSettlement() async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: Text(
+            '정산 완료',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: _kPrimaryTextColor,
+            ),
+          ),
+          content: Text(
+            '선택한 공용 지출에 대한 정산이 완료되었습니다.',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: _kPrimaryTextColor,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                '확인',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: _kPrimaryTextColor,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    if (!mounted) return;
+    Navigator.pop(context, _selectedExpenseIds.toSet());
+  }
+
+  _SettlementResult _calculateSettlement(List<ExpenseEntry> expenses) {
     final Map<String, Map<String, double>> owed = {};
-    final Set<String> fallbackParticipants = participants.toSet();
+    final Set<String> fallbackParticipants = widget.participants.toSet();
 
     for (final expense in expenses) {
       final String? payer = expense.payer;
@@ -1732,7 +1968,6 @@ class SettlementSheet extends StatelessWidget {
     });
 
     entries.sort((a, b) => b.amount.compareTo(a.amount));
-
     return _SettlementResult(entries: entries);
   }
 

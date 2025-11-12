@@ -37,6 +37,7 @@ class _TripPlanScheduleScreenState extends State<TripPlanScheduleScreen> {
   TripRoom? _currentTripRoom;
 
   late List<String> _activeEditors;
+  bool _isModalOpen = false;
 
   late final List<ScheduleDay> _scheduleDays;
 
@@ -53,6 +54,10 @@ class _TripPlanScheduleScreenState extends State<TripPlanScheduleScreen> {
 
     _scheduleDays = _stateService.scheduleDays;
     _activeEditors = List<String>.from(_stateService.activeEditors);
+    _stateService.setScheduleDaysForRoom(
+      _currentTripRoom?.id ?? '',
+      _scheduleDays.map((day) => day.id),
+    );
 
     if (widget.initialPlaceName != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -60,6 +65,16 @@ class _TripPlanScheduleScreenState extends State<TripPlanScheduleScreen> {
         _openAddSchedule(prefilledLocation: widget.initialPlaceName);
       });
     }
+  }
+
+  Future<bool> _handleWillPop() async {
+    // 현재 화면에서 뒤로가기 시 MainMenuScreen으로 이동
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const MainMenuScreen()),
+    );
+    // 시스템의 기본 뒤로가기 동작(앱 종료 등)은 막음
+    return false;
   }
 
   @override
@@ -101,95 +116,98 @@ class _TripPlanScheduleScreenState extends State<TripPlanScheduleScreen> {
     final double buttonBottomSpacing = 12 * scale;
     final double buttonHeight = 55 * scale;
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Color(0xFFFFF5F5),
-        systemNavigationBarColor: Color(0xFFFFFCFC),
-      ),
-      child: Scaffold(
-        backgroundColor: const Color(0xFFFFFCFC),
-        bottomNavigationBar: CustomNavbar(
-          currentIndex: _currentNavbarIndex,
-          onTap: _handleNavbarTap,
+    return WillPopScope(
+      onWillPop: _handleWillPop,
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Color(0xFFFFF5F5),
+          systemNavigationBarColor: Color(0xFFFFFCFC),
         ),
-        body: SafeArea(
-          child: Column(
-            children: [
-              GestureDetector(
-                onTap: _showTripRoomSelector,
-                child: TopTab(
-                  title: _currentTripRoom?.title ?? '여행방을 선택해주세요',
-                  participantCount: _currentTripRoom?.participantCount ?? 0,
-                  dDay: _currentTripRoom?.dDay ?? 'D-?',
+        child: Scaffold(
+          backgroundColor: const Color(0xFFFFFCFC),
+          bottomNavigationBar: CustomNavbar(
+            currentIndex: _currentNavbarIndex,
+            onTap: _handleNavbarTap,
+          ),
+          body: SafeArea(
+            child: Column(
+              children: [
+                GestureDetector(
+                  onTap: _showTripRoomSelector,
+                  child: TopTab(
+                    title: _currentTripRoom?.title ?? '여행방을 선택해주세요',
+                    participantCount: _currentTripRoom?.participantCount ?? 0,
+                    dDay: _currentTripRoom?.dDay ?? 'D-?',
+                  ),
                 ),
-              ),
-              TabNavigation(
-                selectedIndex: _selectedSubTabIndex,
-                onTap: (index) {
-                  if (_selectedSubTabIndex == index) return;
-                  setState(() {
-                    _selectedSubTabIndex = index;
-                  });
-                  _navigateToSubTab(index);
-                },
-              ),
-              Expanded(
-                child: Stack(
-                  children: [
-                    SingleChildScrollView(
-                      padding: EdgeInsets.fromLTRB(
-                        17 * scale,
-                        14 * scale,
-                        17 * scale,
-                        buttonHeight + buttonBottomSpacing,
-                      ),
-                      physics: const BouncingScrollPhysics(),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildEditorsBanner(scale),
-                          SizedBox(height: 14 * scale),
-                          ..._scheduleDays.map(
-                            (day) => Padding(
-                              padding: EdgeInsets.only(bottom: 14 * scale),
-                              child: _buildDaySection(day, scale),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Positioned(
-                      left: 17 * scale,
-                      right: 17 * scale,
-                      bottom: buttonBottomSpacing,
-                      child: Center( // 1. Center 위젯으로 감싸기
-                        child: SizedBox(
-                          width: 211 * scale, // 2. 원하는 가로 길이 지정
-                          height: buttonHeight,
-                          child: ElevatedButton(
-                            onPressed: () => _openAddSchedule(),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFFF8282),
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12 * scale),
-                              ),
-                              padding: EdgeInsets.symmetric(vertical: 12 * scale),
-                              textStyle: TextStyle(
-                                fontSize: 22 * scale,
-                                fontWeight: FontWeight.w600,
-                                fontFamily: defaultFontFamily,
+                TabNavigation(
+                  selectedIndex: _selectedSubTabIndex,
+                  onTap: (index) {
+                    if (_selectedSubTabIndex == index) return;
+                    setState(() {
+                      _selectedSubTabIndex = index;
+                    });
+                    _navigateToSubTab(index);
+                  },
+                ),
+                Expanded(
+                  child: Stack(
+                    children: [
+                      SingleChildScrollView(
+                        padding: EdgeInsets.fromLTRB(
+                          17 * scale,
+                          14 * scale,
+                          17 * scale,
+                          buttonHeight + buttonBottomSpacing,
+                        ),
+                        physics: const BouncingScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildEditorsBanner(scale),
+                            SizedBox(height: 14 * scale),
+                            ..._scheduleDays.map(
+                              (day) => Padding(
+                                padding: EdgeInsets.only(bottom: 14 * scale),
+                                child: _buildDaySection(day, scale),
                               ),
                             ),
-                            child: const Text('일정 추가하기'),
+                          ],
+                        ),
+                      ),
+                      Positioned(
+                        left: 17 * scale,
+                        right: 17 * scale,
+                        bottom: buttonBottomSpacing,
+                        child: Center(
+                          child: SizedBox(
+                            width: 211 * scale,
+                            height: buttonHeight,
+                            child: ElevatedButton(
+                              onPressed: () => _openAddSchedule(),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFFF8282),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12 * scale),
+                                ),
+                                padding: EdgeInsets.symmetric(vertical: 12 * scale),
+                                textStyle: TextStyle(
+                                  fontSize: 22 * scale,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: defaultFontFamily,
+                                ),
+                              ),
+                              child: const Text('일정 추가하기'),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -198,24 +216,18 @@ class _TripPlanScheduleScreenState extends State<TripPlanScheduleScreen> {
 
   Widget _buildEditorsBanner(double scale) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20 * scale, vertical: 14 * scale),
+      padding: EdgeInsets.all(16 * scale),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF5F5),
         borderRadius: BorderRadius.circular(12 * scale),
-        border: Border.all(color: const Color(0x801A0802), width: 1),
+        border: Border.all(color: const Color(0xFF1A0802), width: 1),
       ),
       child: Row(
         children: [
           Container(
-            width: 28 * scale,
-            height: 28 * scale,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFF1A0802), width: 1),
-            ),
             child: Icon(
               Icons.group_add,
-              size: 18 * scale,
+              size: 20 * scale,
               color: const Color(0xFF1A0802),
             ),
           ),
@@ -224,8 +236,8 @@ class _TripPlanScheduleScreenState extends State<TripPlanScheduleScreen> {
             child: Text(
               '현재 편집 중:',
               style: TextStyle(
-                fontSize: 16 * scale,
-                fontWeight: FontWeight.w600,
+                fontSize: 18 * scale,
+                fontWeight: FontWeight.w400,
                 color: Colors.black,
               ),
             ),
@@ -263,7 +275,7 @@ class _TripPlanScheduleScreenState extends State<TripPlanScheduleScreen> {
 
   Widget _buildDaySection(ScheduleDay day, double scale) {
     return Container(
-      padding: EdgeInsets.fromLTRB(20 * scale, 20 * scale, 20 * scale, 20 * scale),
+      padding: EdgeInsets.all(16 * scale),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF5F5),
         borderRadius: BorderRadius.circular(12 * scale),
@@ -279,8 +291,8 @@ class _TripPlanScheduleScreenState extends State<TripPlanScheduleScreen> {
               Text(
                 day.title,
                 style: TextStyle(
-                  fontSize: 18 * scale,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 20 * scale,
+                  fontWeight: FontWeight.w400,
                   color: Colors.black,
                 ),
               ),
@@ -318,8 +330,9 @@ class _TripPlanScheduleScreenState extends State<TripPlanScheduleScreen> {
               width: 50 * scale,
               height: 50 * scale,
               decoration: BoxDecoration(
-                color: const Color(0xFFFDDFCC),
+                color: Colors.white, // 1. 배경색을 흰색으로 변경
                 borderRadius: BorderRadius.circular(8 * scale),
+                border: Border.all(color: const Color(0xFFFC5858), width: 1), // 2. 테두리 추가
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -469,6 +482,11 @@ class _TripPlanScheduleScreenState extends State<TripPlanScheduleScreen> {
         );
         day.items.sort((a, b) => _timeToMinutes(a.time).compareTo(_timeToMinutes(b.time)));
         _activeEditors = List<String>.from(_stateService.activeEditors);
+        _stateService.setScheduleDaysForRoom(
+          _currentTripRoom?.id ?? '',
+          _scheduleDays.map((d) => d.id),
+        );
+        _stateService.markScheduleEntryAdded(_currentTripRoom?.id ?? '', result.dayId);
       });
     });
 
@@ -501,6 +519,14 @@ class _TripPlanScheduleScreenState extends State<TripPlanScheduleScreen> {
 
     modalFuture.then((result) {
       if (result == null) return;
+      if (result.isDeleted) {
+        setState(() {
+          final ScheduleDay sourceDay = _scheduleDays.firstWhere((d) => d.id == day.id);
+          sourceDay.items.removeWhere((entry) => entry.id == item.id);
+          _activeEditors = List<String>.from(_stateService.activeEditors);
+        });
+        return;
+      }
       setState(() {
         final ScheduleDay sourceDay = _scheduleDays.firstWhere((d) => d.id == day.id);
         sourceDay.items.removeWhere((entry) => entry.id == item.id);
@@ -520,6 +546,11 @@ class _TripPlanScheduleScreenState extends State<TripPlanScheduleScreen> {
           scheduleDay.items.sort((a, b) => _timeToMinutes(a.time).compareTo(_timeToMinutes(b.time)));
         }
         _activeEditors = List<String>.from(_stateService.activeEditors);
+        _stateService.setScheduleDaysForRoom(
+          _currentTripRoom?.id ?? '',
+          _scheduleDays.map((d) => d.id),
+        );
+        _stateService.markScheduleEntryAdded(_currentTripRoom?.id ?? '', result.dayId);
       });
     });
 
@@ -674,6 +705,7 @@ class ScheduleEditorResult {
     required this.location,
     required this.memo,
     required this.editors,
+    this.isDeleted = false,
   });
 
   final String dayId;
@@ -682,6 +714,7 @@ class ScheduleEditorResult {
   final String location;
   final String memo;
   final List<String> editors;
+  final bool isDeleted;
 }
 
 class ScheduleEditorSheet extends StatefulWidget {
@@ -848,6 +881,30 @@ class _ScheduleEditorSheetState extends State<ScheduleEditorSheet> {
               ),
             ),
             SizedBox(height: 24 * scale),
+            if (widget.initialEntry != null) ...[
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: _onDelete,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFFFF5C5C)),
+                    foregroundColor: const Color(0xFFFF5C5C),
+                    padding: EdgeInsets.symmetric(vertical: 12 * scale),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12 * scale),
+                    ),
+                  ),
+                  child: Text(
+                    '일정 삭제하기',
+                    style: TextStyle(
+                      fontSize: 16 * scale,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 12 * scale),
+            ],
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -875,9 +932,7 @@ class _ScheduleEditorSheetState extends State<ScheduleEditorSheet> {
 
   void _onSubmit() {
     if (_titleController.text.trim().isEmpty || _locationController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('제목과 장소를 입력해주세요.')),
-      );
+      _showValidationDialog('제목과 장소를 입력해주세요.');
       return;
     }
 
@@ -890,6 +945,127 @@ class _ScheduleEditorSheetState extends State<ScheduleEditorSheet> {
         location: _locationController.text.trim(),
         memo: _memoController.text.trim(),
         editors: const [],
+        isDeleted: false,
+      ),
+    );
+  }
+
+  void _showValidationDialog(String message) {
+    final double scale =
+        MediaQuery.of(context).size.width / _TripPlanScheduleScreenState._designWidth;
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12 * scale)),
+          titlePadding: EdgeInsets.fromLTRB(24 * scale, 20 * scale, 24 * scale, 8 * scale),
+          contentPadding: EdgeInsets.fromLTRB(24 * scale, 0, 24 * scale, 8 * scale),
+          actionsPadding: EdgeInsets.only(right: 12 * scale, bottom: 8 * scale),
+          title: Text(
+            '알림',
+            style: TextStyle(
+              fontSize: 20 * scale,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF1A0802),
+            ),
+          ),
+          content: Text(
+            message,
+            style: TextStyle(
+              fontSize: 16 * scale,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF1A0802),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                '확인',
+                style: TextStyle(
+                  fontSize: 16 * scale,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF1A0802),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _onDelete() async {
+    final double scale =
+        MediaQuery.of(context).size.width / _TripPlanScheduleScreenState._designWidth;
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12 * scale)),
+          title: Text(
+            '일정을 삭제할까요?',
+            style: TextStyle(
+              fontSize: 20 * scale,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF1A0802),
+            ),
+          ),
+          content: Text(
+            '삭제한 일정은 되돌릴 수 없습니다.',
+            style: TextStyle(
+              fontSize: 16 * scale,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF1A0802),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(
+                '취소',
+                style: TextStyle(
+                  fontSize: 16 * scale,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF5D6470),
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(
+                '삭제',
+                style: TextStyle(
+                  fontSize: 16 * scale,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFFFF5C5C),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
+    final ScheduleEntry? initialEntry = widget.initialEntry;
+    if (initialEntry == null) return;
+
+    final String dayId = widget.initialDayId ?? widget.days.first.id;
+
+    Navigator.pop(
+      context,
+      ScheduleEditorResult(
+        dayId: dayId,
+        time: initialEntry.time,
+        title: initialEntry.title,
+        location: initialEntry.location,
+        memo: initialEntry.memo,
+        editors: initialEntry.editors,
+        isDeleted: true,
       ),
     );
   }
@@ -902,7 +1078,7 @@ class _ScheduleEditorSheetState extends State<ScheduleEditorSheet> {
         style: TextStyle(
           fontSize: 16 * scale,
           fontWeight: FontWeight.w700,
-          color: Colors.black,
+          color: const Color(0xFF1A0802),
         ),
       ),
     );
@@ -925,6 +1101,8 @@ class _ScheduleEditorSheetState extends State<ScheduleEditorSheet> {
       ),
     );
   }
+
+  Future<bool> _handleWillPop() async => false;
 }
 
 class ScheduleDetailSheet extends StatelessWidget {
@@ -1048,8 +1226,8 @@ class ScheduleDetailSheet extends StatelessWidget {
             Text(
               '현재 편집 중',
               style: TextStyle(
-                fontSize: 16 * scale,
-                fontWeight: FontWeight.w700,
+                fontSize: 18 * scale,
+                fontWeight: FontWeight.w400,
                 color: Colors.black,
               ),
             ),
@@ -1059,7 +1237,14 @@ class ScheduleDetailSheet extends StatelessWidget {
               children: editingEditors
                   .map(
                     (editor) => Chip(
-                      label: Text(editor),
+                      label: Text(
+                          editor,
+                          style: TextStyle(
+                          fontSize: 14 * scale, // 폰트 크기를 키웁니다.
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFFFC5858),
+                          ),
+                      ),
                       backgroundColor: const Color(0xFFFFF5F5),
                       side: const BorderSide(color: Color(0xFFFC5858)),
                     ),

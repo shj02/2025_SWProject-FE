@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../models/trip_room.dart';
 import '../services/trip_room_service.dart';
+import '../services/trip_plan_state_service.dart';
 import '../widgets/custom_navbar.dart';
 import '../widgets/tab_navigation.dart';
 import '../widgets/top_tab.dart';
@@ -28,6 +29,7 @@ class _TripPlanChecklistScreenState extends State<TripPlanChecklistScreen> {
   int _selectedSubTabIndex = 4;
 
   late final TripRoomService _tripRoomService;
+  late final TripPlanStateService _stateService;
   TripRoom? _currentTripRoom;
 
   late List<ChecklistItem> _sharedChecklist;
@@ -37,6 +39,7 @@ class _TripPlanChecklistScreenState extends State<TripPlanChecklistScreen> {
   void initState() {
     super.initState();
     _tripRoomService = TripRoomService();
+    _stateService = TripPlanStateService();
     _currentTripRoom = _tripRoomService.currentTripRoom;
 
     if (_currentTripRoom != null) {
@@ -90,7 +93,39 @@ class _TripPlanChecklistScreenState extends State<TripPlanChecklistScreen> {
     final double scale = screenSize.width / _designWidth;
 
     if (_tripRoomService.tripRooms.isEmpty || _currentTripRoom == null) {
-      return AnnotatedRegion<SystemUiOverlayStyle>(
+      return WillPopScope(
+        onWillPop: _handleWillPop,
+        child: AnnotatedRegion<SystemUiOverlayStyle>(
+          value: const SystemUiOverlayStyle(
+            statusBarColor: Color(0xFFFFF5F5),
+            systemNavigationBarColor: Color(0xFFFFFCFC),
+          ),
+          child: Scaffold(
+            backgroundColor: const Color(0xFFFFFCFC),
+            bottomNavigationBar: CustomNavbar(
+              currentIndex: _currentNavbarIndex,
+              onTap: _handleNavbarTap,
+            ),
+            body: SafeArea(
+              child: Center(
+                child: Text(
+                  '계획중인 여행이 없습니다.',
+                  style: TextStyle(
+                    fontSize: 20 * scale,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF1A0802),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return WillPopScope(
+      onWillPop: _handleWillPop,
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: const SystemUiOverlayStyle(
           statusBarColor: Color(0xFFFFF5F5),
           systemNavigationBarColor: Color(0xFFFFFCFC),
@@ -102,82 +137,56 @@ class _TripPlanChecklistScreenState extends State<TripPlanChecklistScreen> {
             onTap: _handleNavbarTap,
           ),
           body: SafeArea(
-            child: Center(
-              child: Text(
-                '계획중인 여행이 없습니다.',
-                style: TextStyle(
-                  fontSize: 20 * scale,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF1A0802),
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Color(0xFFFFF5F5),
-        systemNavigationBarColor: Color(0xFFFFFCFC),
-      ),
-      child: Scaffold(
-        backgroundColor: const Color(0xFFFFFCFC),
-        bottomNavigationBar: CustomNavbar(
-          currentIndex: _currentNavbarIndex,
-          onTap: _handleNavbarTap,
-        ),
-        body: SafeArea(
-          child: Column(
-            children: [
-              GestureDetector(
-                onTap: _showTripRoomSelector,
-                child: TopTab(
-                  title: _currentTripRoom?.title ?? '여행방을 선택해주세요',
-                  participantCount: _currentTripRoom?.participantCount ?? 0,
-                  dDay: _currentTripRoom?.dDay ?? 'D-?',
-                ),
-              ),
-              TabNavigation(
-                selectedIndex: _selectedSubTabIndex,
-                onTap: (index) {
-                  if (_selectedSubTabIndex == index) return;
-                  setState(() {
-                    _selectedSubTabIndex = index;
-                  });
-                  _navigateToSubTab(index);
-                },
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: EdgeInsets.symmetric(horizontal: 17 * scale, vertical: 16 * scale),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSection(
-                        scale: scale,
-                        icon: Icons.groups,
-                        title: '공용 체크리스트',
-                        items: _sharedChecklist,
-                        onToggle: _toggleSharedItem,
-                        onAddPressed: () => _openAddChecklistModal(isShared: true),
-                      ),
-                      SizedBox(height: 16 * scale),
-                      _buildSection(
-                        scale: scale,
-                        icon: Icons.person_outline,
-                        title: '개인 체크리스트',
-                        items: _personalChecklist,
-                        onToggle: _togglePersonalItem,
-                        onAddPressed: () => _openAddChecklistModal(isShared: false),
-                      ),
-                    ],
+            child: Column(
+              children: [
+                GestureDetector(
+                  onTap: _showTripRoomSelector,
+                  child: TopTab(
+                    title: _currentTripRoom?.title ?? '여행방을 선택해주세요',
+                    participantCount: _currentTripRoom?.participantCount ?? 0,
+                    dDay: _currentTripRoom?.dDay ?? 'D-?',
                   ),
                 ),
-              ),
-            ],
+                TabNavigation(
+                  selectedIndex: _selectedSubTabIndex,
+                  onTap: (index) {
+                    if (_selectedSubTabIndex == index) return;
+                    setState(() {
+                      _selectedSubTabIndex = index;
+                    });
+                    _navigateToSubTab(index);
+                  },
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.symmetric(horizontal: 17 * scale, vertical: 16 * scale),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSection(
+                          scale: scale,
+                          icon: Icons.groups,
+                          title: '공용 체크리스트',
+                          items: _sharedChecklist,
+                          onToggle: _toggleSharedItem,
+                          onAddPressed: () => _openAddChecklistModal(isShared: true),
+                        ),
+                        SizedBox(height: 16 * scale),
+                        _buildSection(
+                          scale: scale,
+                          icon: Icons.person_outline,
+                          title: '개인 체크리스트',
+                          items: _personalChecklist,
+                          onToggle: _togglePersonalItem,
+                          onAddPressed: () => _openAddChecklistModal(isShared: false),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -193,7 +202,7 @@ class _TripPlanChecklistScreenState extends State<TripPlanChecklistScreen> {
     required VoidCallback onAddPressed,
   }) {
     return Container(
-      padding: EdgeInsets.all(20 * scale),
+      padding: EdgeInsets.all(16 * scale),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF5F6),
         borderRadius: BorderRadius.circular(12 * scale),
@@ -207,13 +216,13 @@ class _TripPlanChecklistScreenState extends State<TripPlanChecklistScreen> {
             children: [
               Row(
                 children: [
-                  Icon(icon, size: 20 * scale, color: const Color(0xFF1A0802)),
-                  SizedBox(width: 10 * scale),
+                  Icon(icon, size: 24 * scale, color: const Color(0xFF1A0802)),
+                  SizedBox(width: 7 * scale),
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 18 * scale,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 20 * scale,
+                      fontWeight: FontWeight.w400,
                       color: Colors.black,
                     ),
                   ),
@@ -222,19 +231,19 @@ class _TripPlanChecklistScreenState extends State<TripPlanChecklistScreen> {
               TextButton.icon(
                 onPressed: onAddPressed,
                 style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 6 * scale),
-                  side: const BorderSide(color: Color(0xFFFD8282)),
+                  backgroundColor: const Color(0xFFFF8282), // 1. 배경색 추가
+                  foregroundColor: Colors.white,             // 2. 아이콘/텍스트 색상 변경
+                  padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 2 * scale),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6 * scale),
+                    borderRadius: BorderRadius.circular(6 * scale), // 3. 둥근 모서리 적용
                   ),
                 ),
-                icon: Icon(Icons.add_circle_outline, size: 16 * scale, color: const Color(0xFF1A0802)),
+                icon: Icon(Icons.add_circle_outline, size: 16 * scale, color: Colors.white),
                 label: Text(
                   '체크리스트 추가',
                   style: TextStyle(
                     fontSize: 15 * scale,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1A0802),
                   ),
                 ),
               ),
@@ -289,6 +298,10 @@ class _TripPlanChecklistScreenState extends State<TripPlanChecklistScreen> {
         } else {
           _personalChecklist.add(result);
         }
+        final String roomId = _currentTripRoom?.id ?? '';
+        if (roomId.isNotEmpty) {
+          _stateService.markChecklistAdded(roomId, isShared: isShared);
+        }
       });
     });
   }
@@ -308,6 +321,8 @@ class _TripPlanChecklistScreenState extends State<TripPlanChecklistScreen> {
       ),
     );
   }
+
+  Future<bool> _handleWillPop() async => false;
 
   void _handleNavbarTap(int index) {
     if (_currentNavbarIndex == index) return;
@@ -515,7 +530,7 @@ class _ChecklistTile extends StatelessWidget {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(6 * scale),
                     border: Border.all(color: const Color(0xFF1A0802), width: 1.2),
-                    color: item.isDone ? const Color(0xFFFC5858) : Colors.white,
+                    color: item.isDone ? const Color(0xFFFF8282) : Colors.white,
                   ),
                   child: item.isDone
                       ? Icon(Icons.check, size: 16 * scale, color: Colors.white)
@@ -577,8 +592,8 @@ class _ChecklistTile extends StatelessWidget {
                       padding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 4 * scale),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(6 * scale),
-                        color: const Color(0xFFFDDFCC),
-                        border: Border.all(color: const Color(0xFFFC5858), width: 1),
+                        color: const Color(0xFFFFF5F5),
+                        border: Border.all(color: const Color(0xFFFF8282), width: 1),
                       ),
                       child: Text(
                         item.assignee!,
@@ -694,15 +709,16 @@ class _ChecklistEditorSheetState extends State<ChecklistEditorSheet> {
               child: ElevatedButton(
                 onPressed: _onSubmit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFC5858),
+                  backgroundColor: const Color(0xFFFF8282),
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(vertical: 14 * scale),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12 * scale),
                   ),
                   textStyle: TextStyle(
-                    fontSize: 18 * scale,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 20 * scale,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'YeongdeokSea',
                   ),
                 ),
                 child: const Text('추가하기'),
@@ -716,9 +732,7 @@ class _ChecklistEditorSheetState extends State<ChecklistEditorSheet> {
 
   void _onSubmit() {
     if (_titleController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('항목 이름을 입력해주세요.')),
-      );
+      _showValidationDialog('항목 이름을 입력해주세요.');
       return;
     }
 
@@ -736,6 +750,49 @@ class _ChecklistEditorSheetState extends State<ChecklistEditorSheet> {
             : null,
         isShared: widget.isShared,
       ),
+    );
+  }
+
+  void _showValidationDialog(String message) {
+    final double scale =
+        MediaQuery.of(context).size.width / _TripPlanChecklistScreenState._designWidth;
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12 * scale)),
+          title: Text(
+            '알림',
+            style: TextStyle(
+              fontSize: 20 * scale,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF1A0802),
+            ),
+          ),
+          content: Text(
+            message,
+            style: TextStyle(
+              fontSize: 16 * scale,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF1A0802),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                '확인',
+                style: TextStyle(
+                  fontSize: 16 * scale,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF1A0802),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

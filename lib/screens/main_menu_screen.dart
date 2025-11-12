@@ -4,10 +4,16 @@ import '../widgets/custom_navbar.dart';
 import '../widgets/sidebar.dart';
 import 'newplan_screen.dart';
 import 'tripplan_date_screen.dart';
+import 'tripplan_candidates_screen.dart';
+import 'tripplan_schedule_screen.dart';
+import 'tripplan_budget_screen.dart';
+import 'tripplan_checklist_screen.dart';
 import 'community_screen.dart';
-import 'edit_profile_screen.dart';
+import 'mypage_screen.dart';
 import '../models/trip_room.dart';
 import '../services/trip_room_service.dart';
+import '../services/trip_plan_state_service.dart';
+import '../services/trip_plan_budget_state_service.dart';
 
 class MainMenuScreen extends StatefulWidget {
   const MainMenuScreen({super.key});
@@ -19,6 +25,8 @@ class MainMenuScreen extends StatefulWidget {
 class _MainMenuScreenState extends State<MainMenuScreen> {
   int _currentIndex = NavbarIndex.home;
   late TripRoomService _tripRoomService;
+  late TripPlanStateService _stateService;
+  late TripPlanBudgetStateService _budgetStateService;
   bool _showRoomCreatedModal = false; // 방 생성 완료 모달 표시 여부
 
   // 사이드바 관련 상태
@@ -30,6 +38,8 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   void initState() {
     super.initState();
     _tripRoomService = TripRoomService();
+    _stateService = TripPlanStateService();
+    _budgetStateService = TripPlanBudgetStateService();
     // 샘플 데이터가 없으면 초기화
     if (_tripRoomService.tripRooms.isEmpty) {
       _tripRoomService.initializeSampleData();
@@ -95,7 +105,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
         Navigator.pushReplacement(
           context,
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => const EditProfileScreen(),
+            pageBuilder: (context, animation, secondaryAnimation) => const MypageScreen(),
             transitionDuration: Duration.zero,
             reverseTransitionDuration: Duration.zero,
           ),
@@ -202,18 +212,20 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     const double designWidth = 402.0;
     final double scale = screenSize.width / designWidth;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFFFFFFF),
-      bottomNavigationBar: (_showDeleteModal || _showRoomCreatedModal) ? null : CustomNavbar(
-        currentIndex: _currentIndex,
-        onTap: _onNavbarTap,
-      ),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // 메인 콘텐츠
-            Column(
-              children: [
+    return WillPopScope(
+      onWillPop: _handleWillPop,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFFFFFFF),
+        bottomNavigationBar: (_showDeleteModal || _showRoomCreatedModal) ? null : CustomNavbar(
+          currentIndex: _currentIndex,
+          onTap: _onNavbarTap,
+        ),
+        body: SafeArea(
+          child: Stack(
+            children: [
+              // 메인 콘텐츠
+              Column(
+                children: [
                 // 상단 메뉴 아이콘
                 Padding(
                   padding: EdgeInsets.only(
@@ -244,34 +256,36 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               ],
             ),
 
-            // 방 생성 완료 모달
-            if (_showRoomCreatedModal) _buildRoomCreatedModal(scale),
+              // 방 생성 완료 모달
+              if (_showRoomCreatedModal) _buildRoomCreatedModal(scale),
 
-            // 사이드바
-            if (_showSidebar) Sidebar(
-              scale: scale,
-              tripList: _tripRoomService.tripRooms.map((room) => {
-                'id': room.id,
-                'name': room.title,
-                'date': room.startDate != null
-                    ? '${room.startDate!.month}/${room.startDate!.day}'
-                    : '날짜 미정',
-                'participants': room.participantCount,
-                'code': _formatRoomCode(room.id),
-                'progress': room.status == 'completed' ? 100
-                    : room.status == 'confirmed' ? 50
-                    : 0,
-                'isOwner': room.participants.isNotEmpty && room.participants.first == '나',
-              }).toList(),
-              onHideSidebar: _hideSidebar,
-              onCreateNewPlan: _showCreateRoomDialog,
-              onEnterTripRoom: _enterTripRoom,
-              onShowDeleteModal: _showDeleteTripModal,
-            ),
+              // 사이드바
+              if (_showSidebar)
+                Sidebar(
+                  scale: scale,
+                  tripList: _tripRoomService.tripRooms.map((room) => {
+                    'id': room.id,
+                    'name': room.title,
+                    'date': room.startDate != null
+                        ? '${room.startDate!.month}/${room.startDate!.day}'
+                        : '날짜 미정',
+                    'participants': room.participantCount,
+                    'code': _formatRoomCode(room.id),
+                    'progress': room.status == 'completed' ? 100
+                        : room.status == 'confirmed' ? 50
+                        : 0,
+                    'isOwner': room.participants.isNotEmpty && room.participants.first == '나',
+                  }).toList(),
+                  onHideSidebar: _hideSidebar,
+                  onCreateNewPlan: _showCreateRoomDialog,
+                  onEnterTripRoom: _enterTripRoom,
+                  onShowDeleteModal: _showDeleteTripModal,
+                ),
 
-            // 여행 삭제 모달
-            if (_showDeleteModal) _buildDeleteTripModal(scale),
-          ],
+              // 여행 삭제 모달
+              if (_showDeleteModal) _buildDeleteTripModal(scale),
+            ],
+          ),
         ),
       ),
     );
@@ -405,6 +419,67 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
 
   // 방이 있을 때의 뷰 (4-1번 프레임)
   Widget _buildRoomExistsView(double scale) {
+    final TripPlanStateService stateService = _stateService;
+    final TripPlanBudgetStateService budgetService = _budgetStateService;
+    final String roomId = _currentRoom?.id ?? '';
+    final List<String> participants = _currentRoom?.participants ?? const [];
+
+    if (roomId.isNotEmpty) {
+      stateService.setScheduleDaysForRoom(
+        roomId,
+        stateService.scheduleDays.map((day) => day.id),
+      );
+    }
+
+    final bool dateComplete = _currentRoom?.startDate != null;
+    final bool candidatesComplete =
+        roomId.isNotEmpty && stateService.hasMemberSuggestedPlace(roomId);
+    final bool scheduleComplete =
+        roomId.isNotEmpty && stateService.isScheduleComplete(roomId);
+    final bool budgetComplete =
+        roomId.isNotEmpty && stateService.isBudgetComplete(roomId, participants);
+    final bool checklistComplete =
+        roomId.isNotEmpty && stateService.isChecklistComplete(roomId);
+
+    final List<bool> steps = [
+      dateComplete,
+      candidatesComplete,
+      scheduleComplete,
+      budgetComplete,
+      checklistComplete,
+    ];
+    final int progressCount = steps.where((step) => step).length;
+    final double progressRatio = progressCount / 5.0;
+
+    String? nextRoute;
+    String nextStepName;
+    String buttonText;
+
+    if (!dateComplete) {
+      nextRoute = 'date';
+      nextStepName = '날짜 정하기';
+      buttonText = '날짜 정하러 가기';
+    } else if (!candidatesComplete) {
+      nextRoute = 'candidates';
+      nextStepName = '후보지 정하기';
+      buttonText = '후보지 정하러 가기';
+    } else if (!scheduleComplete) {
+      nextRoute = 'schedule';
+      nextStepName = '일정표 짜기';
+      buttonText = '일정표 짜러 가기';
+    } else if (!budgetComplete) {
+      nextRoute = 'budget';
+      nextStepName = '예산 정하기';
+      buttonText = '예산 정하러 가기';
+    } else if (!checklistComplete) {
+      nextRoute = 'checklist';
+      nextStepName = '체크리스트 확인하기';
+      buttonText = '체크리스트 확인하러 가기';
+    } else {
+      nextRoute = 'date';
+      nextStepName = '모두 완료';
+      buttonText = '계획 보러 가기';
+    }
     return Stack(
       children: [
         // 장식용 원들
@@ -511,29 +586,34 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               // 계획하러 가는 버튼
               GestureDetector(
                 onTap: () {
-                  final nextRoute = _currentRoom?.getNextStepRoute();
-                  if (nextRoute == 'date') {
-                    // 날짜 선택 페이지로 이동
-                    Navigator.pushReplacement(
-                      context,
-                      PageRouteBuilder(
-                        pageBuilder: (context, animation, secondaryAnimation) => const TripPlanDateScreen(),
-                        transitionDuration: Duration.zero,
-                        reverseTransitionDuration: Duration.zero,
-                      ),
-                    );
-                  } else if (nextRoute != null) {
-                    // TODO: 다른 단계 화면으로 이동 (후보지, 일정표, 예산, 체크리스트)
-                    // 현재는 날짜 선택 화면으로 이동
-                    Navigator.pushReplacement(
-                      context,
-                      PageRouteBuilder(
-                        pageBuilder: (context, animation, secondaryAnimation) => const TripPlanDateScreen(),
-                        transitionDuration: Duration.zero,
-                        reverseTransitionDuration: Duration.zero,
-                      ),
-                    );
+                  Widget targetScreen;
+                  switch (nextRoute) {
+                    case 'candidates':
+                      targetScreen = const TripPlanCandidatesScreen();
+                      break;
+                    case 'schedule':
+                      targetScreen = const TripPlanScheduleScreen();
+                      break;
+                    case 'budget':
+                      targetScreen = const TripPlanBudgetScreen();
+                      break;
+                    case 'checklist':
+                      targetScreen = const TripPlanChecklistScreen();
+                      break;
+                    case 'date':
+                    default:
+                      targetScreen = const TripPlanDateScreen();
+                      break;
                   }
+
+                  Navigator.pushReplacement(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) => targetScreen,
+                      transitionDuration: Duration.zero,
+                      reverseTransitionDuration: Duration.zero,
+                    ),
+                  );
                 },
                 child: Container(
                   width: 301 * scale,
@@ -559,7 +639,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   ),
                   child: Center(
                     child: Text(
-                      _currentRoom?.getNextStepButtonText() ?? '계획 보러 가기',
+                      buttonText,
                       style: TextStyle(
                         fontSize: 24 * scale,
                         color: Colors.white,
@@ -611,7 +691,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                               border: Border.all(color: Colors.black),
                             ),
                             child: Text(
-                              '${_currentRoom?.getProgressCount() ?? 0}/5 완료',
+                              '$progressCount/5 완료',
                               style: TextStyle(
                                 fontSize: 13 * scale,
                                 color: const Color(0xFF1A0802),
@@ -639,7 +719,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                           ),
                           // 2. 실제 진행률을 나타내는 바
                           FractionallySizedBox(
-                            widthFactor: (_currentRoom?.getProgressCount() ?? 0) / 5.0,
+                            widthFactor: progressRatio.clamp(0.0, 1.0),
                             child: Container(
                               height: 15 * scale, // 배경과 동일한 높이
                               decoration: BoxDecoration(
@@ -653,7 +733,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                       SizedBox(height: 6 * scale),
                       Center(
                         child: Text(
-                          '${((_currentRoom?.getProgressCount() ?? 0) / 5.0 * 100).toInt()}% 완료',
+                          '${(progressRatio * 100).toInt()}% 완료',
                           style: TextStyle(
                             fontSize: 14 * scale,
                             color: const Color(0xFF1A0802),
@@ -664,7 +744,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                       SizedBox(height: 6 * scale),
                       Center(
                         child: Text(
-                          '다음 단계: ${_currentRoom?.getNextStepName() ?? '날짜 선택하기'}',
+                          '다음 단계: $nextStepName',
                           style: TextStyle(
                             fontSize: 16 * scale,
                             color: const Color(0xFF1A0802),
@@ -943,5 +1023,21 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   @override
   void dispose() {
     super.dispose();
+  }
+
+  Future<bool> _handleWillPop() async {
+    if (_showDeleteModal) {
+      _hideDeleteTripModal();
+      return false;
+    }
+    if (_showRoomCreatedModal) {
+      _hideRoomCreatedModal();
+      return false;
+    }
+    if (_showSidebar) {
+      _hideSidebar();
+      return false;
+    }
+    return false;
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/budget_models.dart';
 import '../models/schedule_models.dart';
 
 class TripPlanStateService {
@@ -21,6 +22,15 @@ class TripPlanStateService {
   final List<String> activeEditors = [];
   final Map<String, int> _activeEditorCounts = {};
   final Map<String, Map<String, int>> _entryEditorCounts = {};
+
+  final Map<String, Set<String>> _memberPlaceSuggestorsByRoom = {};
+  final Map<String, Set<String>> _checklistTypesByRoom = {};
+  final Map<String, Set<String>> _scheduleDaysByRoom = {};
+  final Map<String, Set<String>> _scheduleCompletedDaysByRoom = {};
+  final Map<String, Set<String>> _budgetMembersByRoom = {};
+  final Set<String> _memberPlaceSuggestors = {};
+  final Set<String> _completedChecklistTypes = {};
+  bool _budgetComplete = false;
 
   Map<String, dynamic>? selectedRecommendedDate;
   bool isDateConfirmed = false;
@@ -235,6 +245,87 @@ class TripPlanStateService {
     activeEditors
       ..clear()
       ..addAll(sortedEditors);
+  }
+
+  void addFriendSuggestionMember(String roomId, String memberName) {
+    if (roomId.isEmpty || memberName.isEmpty) return;
+    _memberPlaceSuggestorsByRoom
+        .putIfAbsent(roomId, () => <String>{})
+        .add(memberName);
+  }
+
+  bool hasMemberSuggestedPlace(String roomId) =>
+      _memberPlaceSuggestorsByRoom[roomId]?.isNotEmpty ?? false;
+
+  void markChecklistAdded(String roomId, {required bool isShared}) {
+    if (roomId.isEmpty) return;
+    _checklistTypesByRoom
+        .putIfAbsent(roomId, () => <String>{})
+        .add(isShared ? 'shared' : 'personal');
+  }
+
+  bool hasSharedChecklist(String roomId) =>
+      _checklistTypesByRoom[roomId]?.contains('shared') ?? false;
+
+  bool hasPersonalChecklist(String roomId) =>
+      _checklistTypesByRoom[roomId]?.contains('personal') ?? false;
+
+  bool isChecklistComplete(String roomId) =>
+      hasSharedChecklist(roomId) && hasPersonalChecklist(roomId);
+
+  void setScheduleDaysForRoom(String roomId, Iterable<String> dayIds) {
+    if (roomId.isEmpty) return;
+    final Set<String> ids = dayIds
+        .map((id) => id.trim())
+        .where((id) => id.isNotEmpty)
+        .toSet();
+    _scheduleDaysByRoom[roomId] = ids;
+    _scheduleCompletedDaysByRoom
+        .putIfAbsent(roomId, () => <String>{})
+        .removeWhere((id) => !ids.contains(id));
+  }
+
+  void markScheduleEntryAdded(String roomId, String dayId) {
+    if (roomId.isEmpty || dayId.isEmpty) return;
+    final Set<String> completedDays =
+        _scheduleCompletedDaysByRoom.putIfAbsent(roomId, () => <String>{});
+    completedDays.add(dayId);
+    final Set<String>? availableDays = _scheduleDaysByRoom[roomId];
+    if (availableDays != null) {
+      completedDays.removeWhere((id) => !availableDays.contains(id));
+    }
+  }
+
+  bool isScheduleComplete(String roomId) {
+    final Set<String>? availableDays = _scheduleDaysByRoom[roomId];
+    if (availableDays == null || availableDays.isEmpty) return false;
+    final Set<String>? completedDays = _scheduleCompletedDaysByRoom[roomId];
+    if (completedDays == null) return false;
+    return availableDays.every(completedDays.contains);
+  }
+
+  void markBudgetForMember(String roomId, String memberName) {
+    final String trimmedRoomId = roomId.trim();
+    final String trimmedName = memberName.trim();
+    if (trimmedRoomId.isEmpty || trimmedName.isEmpty) return;
+    _budgetMembersByRoom
+        .putIfAbsent(trimmedRoomId, () => <String>{})
+        .add(trimmedName);
+  }
+
+  bool isBudgetComplete(String roomId, Iterable<String> participants) {
+    final String trimmedRoomId = roomId.trim();
+    if (trimmedRoomId.isEmpty) return false;
+    final Set<String> participantSet = participants
+        .map((name) => name.trim())
+        .where((name) => name.isNotEmpty)
+        .toSet();
+    if (participantSet.isEmpty) return false;
+    final Set<String> filledMembers =
+        _budgetMembersByRoom[trimmedRoomId] ?? const <String>{};
+    final bool nameMatchComplete = participantSet.every(filledMembers.contains);
+    if (nameMatchComplete) return true;
+    return filledMembers.length >= participantSet.length;
   }
 }
 

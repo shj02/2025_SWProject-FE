@@ -57,25 +57,28 @@ class _TripPlanCandidatesScreenState extends State<TripPlanCandidatesScreen> {
     final double scale = screenSize.width / _designWidth;
 
     if (_tripRoomService.tripRooms.isEmpty || _currentTripRoom == null) {
-      return AnnotatedRegion<SystemUiOverlayStyle>(
-        value: const SystemUiOverlayStyle(
-          statusBarColor: Color(0xFFFFF5F5),
-          systemNavigationBarColor: Color(0xFFFFFCFC),
-        ),
-        child: Scaffold(
-          backgroundColor: const Color(0xFFFFFCFC),
-          bottomNavigationBar: CustomNavbar(
-            currentIndex: _currentNavbarIndex,
-            onTap: _handleNavbarTap,
+      return WillPopScope(
+        onWillPop: _handleWillPop,
+        child: AnnotatedRegion<SystemUiOverlayStyle>(
+          value: const SystemUiOverlayStyle(
+            statusBarColor: Color(0xFFFFF5F5),
+            systemNavigationBarColor: Color(0xFFFFFCFC),
           ),
-          body: SafeArea(
-            child: Center(
-              child: Text(
-                '계획중인 여행이 없습니다.',
-                style: TextStyle(
-                  fontSize: 20 * scale,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF1A0802),
+          child: Scaffold(
+            backgroundColor: const Color(0xFFFFFCFC),
+            bottomNavigationBar: CustomNavbar(
+              currentIndex: _currentNavbarIndex,
+              onTap: _handleNavbarTap,
+            ),
+            body: SafeArea(
+              child: Center(
+                child: Text(
+                  '계획중인 여행이 없습니다.',
+                  style: TextStyle(
+                    fontSize: 20 * scale,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF1A0802),
+                  ),
                 ),
               ),
             ),
@@ -87,78 +90,81 @@ class _TripPlanCandidatesScreenState extends State<TripPlanCandidatesScreen> {
     final double buttonBottomSpacing = 12 * scale;
     final double buttonHeight = 55 * scale;
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Color(0xFFFFF5F5),
-        systemNavigationBarColor: Color(0xFFFFFCFC),
-      ),
-      child: Scaffold(
-        backgroundColor: const Color(0xFFFFFCFC),
-        bottomNavigationBar: _showAddPlaceModal
-            ? null
-            : CustomNavbar(
-                currentIndex: _currentNavbarIndex,
-                onTap: _handleNavbarTap,
-              ),
-        body: SafeArea(
-          child: Stack(
-            children: [
-              Column(
-                children: [
-                  GestureDetector(
-                    onTap: _showTripRoomSelector,
-                    child: TopTab(
-                      title: _currentTripRoom?.title ?? '여행방을 선택해주세요',
-                      participantCount: _currentTripRoom?.participantCount ?? 0,
-                      dDay: _currentTripRoom?.dDay ?? 'D-?',
+    return WillPopScope(
+      onWillPop: _handleWillPop,
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Color(0xFFFFF5F5),
+          systemNavigationBarColor: Color(0xFFFFFCFC),
+        ),
+        child: Scaffold(
+          backgroundColor: const Color(0xFFFFFCFC),
+          bottomNavigationBar: _showAddPlaceModal
+              ? null
+              : CustomNavbar(
+                  currentIndex: _currentNavbarIndex,
+                  onTap: _handleNavbarTap,
+                ),
+          body: SafeArea(
+            child: Stack(
+              children: [
+                Column(
+                  children: [
+                    GestureDetector(
+                      onTap: _showTripRoomSelector,
+                      child: TopTab(
+                        title: _currentTripRoom?.title ?? '여행방을 선택해주세요',
+                        participantCount: _currentTripRoom?.participantCount ?? 0,
+                        dDay: _currentTripRoom?.dDay ?? 'D-?',
+                      ),
                     ),
-                  ),
-                  TabNavigation(
-                    selectedIndex: _selectedSubTabIndex,
-                    onTap: (index) {
-                      if (_selectedSubTabIndex == index) return;
-                      setState(() {
-                        _selectedSubTabIndex = index;
-                      });
-                      _navigateToSubTab(index);
-                    },
-                  ),
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        SingleChildScrollView(
-                          padding: EdgeInsets.fromLTRB(
-                            17 * scale,
-                            14 * scale,
-                            17 * scale,
-                            buttonHeight + buttonBottomSpacing + 14 * scale,
-                          ),
-                          physics: const BouncingScrollPhysics(),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildAIRecommendedSection(scale),
-                              SizedBox(height: 14 * scale),
-                              _buildFriendSuggestedSection(scale),
-                            ],
-                          ),
-                        ),
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          bottom: buttonBottomSpacing,
-                          child: Align(
-                            alignment: Alignment.center,
-                            child: _buildAddPlaceButton(context, scale, buttonHeight),
-                          ),
-                        ),
-                      ],
+                    TabNavigation(
+                      selectedIndex: _selectedSubTabIndex,
+                      onTap: (index) {
+                        if (_selectedSubTabIndex == index) return;
+                        setState(() {
+                          _selectedSubTabIndex = index;
+                        });
+                        _navigateToSubTab(index);
+                      },
                     ),
-                  ),
-                ],
-              ),
-              if (_showAddPlaceModal) _buildAddPlaceModal(scale),
-            ],
+                    Expanded(
+                      child: Stack(
+                        children: [
+                          SingleChildScrollView(
+                            padding: EdgeInsets.fromLTRB(
+                              17 * scale,
+                              14 * scale,
+                              17 * scale,
+                              buttonHeight + buttonBottomSpacing + 14 * scale,
+                            ),
+                            physics: const BouncingScrollPhysics(),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildAIRecommendedSection(scale),
+                                SizedBox(height: 14 * scale),
+                                _buildFriendSuggestedSection(scale),
+                              ],
+                            ),
+                          ),
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: buttonBottomSpacing,
+                            child: Align(
+                              alignment: Alignment.center,
+                              child: _buildAddPlaceButton(context, scale, buttonHeight),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                if (_showAddPlaceModal) _buildAddPlaceModal(scale),
+              ],
+            ),
           ),
         ),
       ),
@@ -271,6 +277,7 @@ class _TripPlanCandidatesScreenState extends State<TripPlanCandidatesScreen> {
     setState(() {
       place['isAddedToSchedule'] = true;
     });
+
   }
 
   Widget _buildSectionHeader({
@@ -477,6 +484,8 @@ class _TripPlanCandidatesScreenState extends State<TripPlanCandidatesScreen> {
       ),
     );
   }
+
+  Future<bool> _handleWillPop() async => false;
 
   void _showPlaceDetail(
     Map<String, dynamic> place, {
@@ -755,6 +764,13 @@ class _TripPlanCandidatesScreenState extends State<TripPlanCandidatesScreen> {
                   });
                   _showAddPlaceModal = false;
                 });
+                final String roomId = _currentTripRoom?.id ?? '';
+                if (roomId.isNotEmpty) {
+                  _stateService.addFriendSuggestionMember(
+                    roomId,
+                    UserService().userName ?? '나',
+                  );
+                }
               },
             ),
           ),
@@ -954,7 +970,7 @@ class _AddPlaceModalContentState extends State<_AddPlaceModalContent> {
                 style: TextStyle(
                   fontSize: 24 * scale,
                   fontWeight: FontWeight.w700,
-                  color: Colors.black,
+                  color: const Color(0xFF1A0802),
                 ),
               ),
               IconButton(
@@ -1043,7 +1059,7 @@ class _AddPlaceModalContentState extends State<_AddPlaceModalContent> {
                   style: TextStyle(
                     fontSize: 18 * scale,
                     fontWeight: FontWeight.w700,
-                    color: Colors.black,
+                    color: const Color(0xFF1A0802),
                   ),
                 ),
                 SizedBox(height: 8 * scale),
@@ -1065,9 +1081,7 @@ class _AddPlaceModalContentState extends State<_AddPlaceModalContent> {
             child: ElevatedButton(
               onPressed: () {
                 if (_placeNameController.text.isEmpty || _selectedCategory == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('장소명과 카테고리를 선택해주세요.')),
-                  );
+                  _showValidationDialog('장소명과 카테고리를 입력해주세요.');
                   return;
                 }
                 widget.onSubmit(
@@ -1103,7 +1117,7 @@ class _AddPlaceModalContentState extends State<_AddPlaceModalContent> {
       style: TextStyle(
         fontSize: 20 * scale,
         fontWeight: FontWeight.w700,
-        color: Colors.black,
+        color: const Color(0xFF1A0802),
       ),
     );
   }
@@ -1135,8 +1149,51 @@ class _AddPlaceModalContentState extends State<_AddPlaceModalContent> {
         style: TextStyle(
           fontSize: 15 * scale,
           fontWeight: FontWeight.w500,
+          color: const Color(0xFF1A0802),
         ),
       ),
+    );
+  }
+
+  void _showValidationDialog(String message) {
+    final double scale = widget.scale;
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12 * scale)),
+          title: Text(
+            '알림',
+            style: TextStyle(
+              fontSize: 20 * scale,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF1A0802),
+            ),
+          ),
+          content: Text(
+            message,
+            style: TextStyle(
+              fontSize: 16 * scale,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF1A0802),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                '확인',
+                style: TextStyle(
+                  fontSize: 16 * scale,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF1A0802),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

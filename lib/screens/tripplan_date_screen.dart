@@ -92,65 +92,66 @@ class _TripPlanDateScreenState extends State<TripPlanDateScreen> {
 
     // 계획중인 여행이 없을 때 빈 화면 표시
     if (_tripRoomService.tripRooms.isEmpty || _currentTripRoom == null) {
-      return AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle(
-          statusBarColor: const Color(0xFFFFF5F5),
-          systemNavigationBarColor: const Color(0xFFFFFCFC),
-        ),
-        child: Scaffold(
-          backgroundColor: const Color(0xFFFFFCFC),
-          bottomNavigationBar: _showDateConfirmModal ? null : CustomNavbar(
-            currentIndex: currentNavbarIndex,
-            onTap: (index) {
-              setState(() {
-                currentNavbarIndex = index;
-              });
-              // 네비게이션 로직
-              switch (index) {
-                case 0: // Home
-                  Navigator.pushReplacement(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const MainMenuScreen(),
-                      transitionDuration: Duration.zero,
-                      reverseTransitionDuration: Duration.zero,
-                    ),
-                  );
-                  break;
-                case 1: // TripPlan
-                // 현재 페이지가 TripPlan이므로 아무 동작 안함
-                  break;
-                case 2: // Community
-                  Navigator.pushReplacement(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const CommunityScreen(),
-                      transitionDuration: Duration.zero,
-                      reverseTransitionDuration: Duration.zero,
-                    ),
-                  );
-                  break;
-                case 3: // Profile
-                  Navigator.pushReplacement(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const MypageScreen(),
-                      transitionDuration: Duration.zero,
-                      reverseTransitionDuration: Duration.zero,
-                    ),
-                  );
-                  break;
-              }
-            },
+      return WillPopScope(
+        onWillPop: _handleWillPop,
+        child: AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle(
+            statusBarColor: const Color(0xFFFFF5F5),
+            systemNavigationBarColor: const Color(0xFFFFFCFC),
           ),
-          body: SafeArea(
-            child: Center(
-              child: Text(
-                '계획중인 여행이 없습니다.',
-                style: TextStyle(
-                  fontSize: 20 * scale,
-                  fontWeight: FontWeight.w400,
-                  color: const Color(0xFF1A0802),
+          child: Scaffold(
+            backgroundColor: const Color(0xFFFFFCFC),
+            bottomNavigationBar: _showDateConfirmModal ? null : CustomNavbar(
+              currentIndex: currentNavbarIndex,
+              onTap: (index) {
+                setState(() {
+                  currentNavbarIndex = index;
+                });
+                switch (index) {
+                  case 0:
+                    Navigator.pushReplacement(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) => const MainMenuScreen(),
+                        transitionDuration: Duration.zero,
+                        reverseTransitionDuration: Duration.zero,
+                      ),
+                    );
+                    break;
+                  case 1:
+                    break;
+                  case 2:
+                    Navigator.pushReplacement(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) => const CommunityScreen(),
+                        transitionDuration: Duration.zero,
+                        reverseTransitionDuration: Duration.zero,
+                      ),
+                    );
+                    break;
+                  case 3:
+                    Navigator.pushReplacement(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) => const MypageScreen(),
+                        transitionDuration: Duration.zero,
+                        reverseTransitionDuration: Duration.zero,
+                      ),
+                    );
+                    break;
+                }
+              },
+            ),
+            body: SafeArea(
+              child: Center(
+                child: Text(
+                  '계획중인 여행이 없습니다.',
+                  style: TextStyle(
+                    fontSize: 20 * scale,
+                    fontWeight: FontWeight.w400,
+                    color: const Color(0xFF1A0802),
+                  ),
                 ),
               ),
             ),
@@ -161,179 +162,163 @@ class _TripPlanDateScreenState extends State<TripPlanDateScreen> {
 
     // 7-3 화면이 표시되면 기존 요소들을 모두 숨기고 7-3만 표시
     if (_isDateConfirmed) {
-      return AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle(
-          statusBarColor: const Color(0xFFFFF5F5),
-          systemNavigationBarColor: const Color(0xFFFFFCFC),
-        ),
-        child: Scaffold(
-          backgroundColor: const Color(0xFFFFFCFC),
-          bottomNavigationBar: _showDateConfirmModal ? null : CustomNavbar(
-            currentIndex: currentNavbarIndex,
-            onTap: (index) {
-              setState(() {
-                currentNavbarIndex = index;
-              });
-              // 네비게이션 로직 추가
-              switch (index) {
-                case 0: // Home
-                  Navigator.pushReplacement(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const MainMenuScreen(),
-                      transitionDuration: Duration.zero,
-                      reverseTransitionDuration: Duration.zero,
-                    ),
-                  );
-                  break;
-                case 1: // TripPlan
-                // 현재 페이지가 TripPlan의 하위 페이지이므로 아무 동작 안함
-                  break;
-                case 2: // Community
-                  Navigator.pushReplacement(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const CommunityScreen(),
-                      transitionDuration: Duration.zero,
-                      reverseTransitionDuration: Duration.zero,
-                    ),
-                  );
-                  break;
-                case 3: // Profile
-                  Navigator.pushReplacement(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const MypageScreen(),
-                      transitionDuration: Duration.zero,
-                      reverseTransitionDuration: Duration.zero,
-                    ),
-                  );
-                  break;
-              }
-            },
+      return WillPopScope(
+        onWillPop: _handleWillPop,
+        child: AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle(
+            statusBarColor: const Color(0xFFFFF5F5),
+            systemNavigationBarColor: const Color(0xFFFFFCFC),
           ),
-          body: SafeArea(
-            child: _buildDateConfirmedView(scale),
+          child: Scaffold(
+            backgroundColor: const Color(0xFFFFFCFC),
+            bottomNavigationBar: _showDateConfirmModal ? null : CustomNavbar(
+              currentIndex: currentNavbarIndex,
+              onTap: (index) {
+                setState(() {
+                  currentNavbarIndex = index;
+                });
+                switch (index) {
+                  case 0:
+                    Navigator.pushReplacement(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) => const MainMenuScreen(),
+                        transitionDuration: Duration.zero,
+                        reverseTransitionDuration: Duration.zero,
+                      ),
+                    );
+                    break;
+                  case 1:
+                    break;
+                  case 2:
+                    Navigator.pushReplacement(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) => const CommunityScreen(),
+                        transitionDuration: Duration.zero,
+                        reverseTransitionDuration: Duration.zero,
+                      ),
+                    );
+                    break;
+                  case 3:
+                    Navigator.pushReplacement(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) => const MypageScreen(),
+                        transitionDuration: Duration.zero,
+                        reverseTransitionDuration: Duration.zero,
+                      ),
+                    );
+                    break;
+                }
+              },
+            ),
+            body: SafeArea(
+              child: _buildDateConfirmedView(scale),
+            ),
           ),
         ),
       );
     }
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle(
-          statusBarColor: const Color(0xFFFFF5F5),
-          systemNavigationBarColor: const Color(0xFFFFFCFC),
-        ),
-        child: Scaffold(
-          backgroundColor: const Color(0xFFFFFCFC),
-          bottomNavigationBar: _showDateConfirmModal ? null : CustomNavbar(
-            currentIndex: currentNavbarIndex,
-            onTap: (index) {
-              setState(() {
-                currentNavbarIndex = index;
-              });
-              // 네비게이션 로직 추가
-              switch (index) {
-                case 0: // Home
-                  Navigator.pushReplacement(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const MainMenuScreen(),
-                      transitionDuration: Duration.zero,
-                      reverseTransitionDuration: Duration.zero,
-                    ),
-                  );
-                  break;
-                case 1: // TripPlan
-                // 현재 페이지가 TripPlan의 하위 페이지이므로 아무 동작 안함
-                  break;
-                case 2: // Community
-                  Navigator.pushReplacement(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const CommunityScreen(),
-                      transitionDuration: Duration.zero,
-                      reverseTransitionDuration: Duration.zero,
-                    ),
-                  );
-                  break;
-                case 3: // Profile
-                  Navigator.pushReplacement(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const MypageScreen(),
-                      transitionDuration: Duration.zero,
-                      reverseTransitionDuration: Duration.zero,
-                    ),
-                  );
-                  break;
-              }
-            },
+    return WillPopScope(
+      onWillPop: _handleWillPop,
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle(
+            statusBarColor: const Color(0xFFFFF5F5),
+            systemNavigationBarColor: const Color(0xFFFFFCFC),
           ),
-          body: SafeArea(
-            child: Stack(
-              children: [
-                Column(
-                  children: [
-                    // 상단탭
-                    GestureDetector(
-                      onTap: _showTripRoomSelector,
-                      child: TopTab(
-                        title: _currentTripRoom?.title ?? "여행방을 선택해주세요",
-                        participantCount: _currentTripRoom?.participantCount ?? 0,
-                        dDay: _currentTripRoom?.dDay ?? "D-?",
+          child: Scaffold(
+            backgroundColor: const Color(0xFFFFFCFC),
+            bottomNavigationBar: _showDateConfirmModal ? null : CustomNavbar(
+              currentIndex: currentNavbarIndex,
+              onTap: (index) {
+                setState(() {
+                  currentNavbarIndex = index;
+                });
+                switch (index) {
+                  case 0:
+                    Navigator.pushReplacement(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) => const MainMenuScreen(),
+                        transitionDuration: Duration.zero,
+                        reverseTransitionDuration: Duration.zero,
                       ),
-                    ),
-
-                    // 하위 탭 네비게이션
-                    TabNavigation(
-                      selectedIndex: selectedSubTabIndex,
-                      onTap: (index) {
-                        setState(() {
-                          selectedSubTabIndex = index;
-                        });
-                        // 탭 변경 시 해당 화면으로 이동
-                        _navigateToSubTab(index);
-                      },
-                    ),
-
-                    // 메인 콘텐츠
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 17),
-                          child: Column(
-                            children: [
-                              const SizedBox(height: 14),
-
-                              // 내 가능 날짜 추가 섹션
-                              _buildAddMyDateSection(),
-
-                              const SizedBox(height: 14),
-
-                              // AI 추천 날짜 섹션
-                              _buildRecommendedDatesSection(),
-
-                              const SizedBox(height: 14),
-
-                              // 멤버별 가능 날짜 섹션
-                              _buildMemberDatesSection(),
-
-                              const SizedBox(height: 14), // 하단 네비게이션을 위한 여백
-                            ],
+                    );
+                    break;
+                  case 1:
+                    break;
+                  case 2:
+                    Navigator.pushReplacement(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) => const CommunityScreen(),
+                        transitionDuration: Duration.zero,
+                        reverseTransitionDuration: Duration.zero,
+                      ),
+                    );
+                    break;
+                  case 3:
+                    Navigator.pushReplacement(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) => const MypageScreen(),
+                        transitionDuration: Duration.zero,
+                        reverseTransitionDuration: Duration.zero,
+                      ),
+                    );
+                    break;
+                }
+              },
+            ),
+            body: SafeArea(
+              child: Stack(
+                children: [
+                  Column(
+                    children: [
+                      GestureDetector(
+                        onTap: _showTripRoomSelector,
+                        child: TopTab(
+                          title: _currentTripRoom?.title ?? "여행방을 선택해주세요",
+                          participantCount: _currentTripRoom?.participantCount ?? 0,
+                          dDay: _currentTripRoom?.dDay ?? "D-?",
+                        ),
+                      ),
+                      TabNavigation(
+                        selectedIndex: selectedSubTabIndex,
+                        onTap: (index) {
+                          setState(() {
+                            selectedSubTabIndex = index;
+                          });
+                          _navigateToSubTab(index);
+                        },
+                      ),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 17),
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 14),
+                                _buildAddMyDateSection(),
+                                const SizedBox(height: 14),
+                                _buildRecommendedDatesSection(),
+                                const SizedBox(height: 14),
+                                _buildMemberDatesSection(),
+                                const SizedBox(height: 14),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-
-                // 7-2 모달 (전체 화면 덮기)
-                if (_showDateConfirmModal) _buildDateConfirmModal(scale),
-              ],
+                    ],
+                  ),
+                  if (_showDateConfirmModal) _buildDateConfirmModal(scale),
+                ],
+              ),
             ),
-          ),
-        )
+          )),
     );
   }
 
@@ -1173,5 +1158,16 @@ class _TripPlanDateScreenState extends State<TripPlanDateScreen> {
         );
         break;
     }
+  }
+
+  Future<bool> _handleWillPop() async {
+    if (_showDateConfirmModal) {
+      setState(() {
+        _showDateConfirmModal = false;
+        _stateService.showDateConfirmModal = false;
+      });
+      return false;
+    }
+    return false;
   }
 }

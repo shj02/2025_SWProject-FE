@@ -4,7 +4,7 @@ import 'new_write_screen.dart';
 import 'post_detail_screen.dart';
 import 'main_menu_screen.dart';
 import 'tripplan_date_screen.dart';
-import 'edit_profile_screen.dart';
+import 'mypage_screen.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -47,57 +47,59 @@ class _CommunityScreenState extends State<CommunityScreen> {
     const double designWidth = 402.0;
     final double scale = screenSize.width / designWidth;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFFFFCFC),
-      bottomNavigationBar: CustomNavbar(
-        currentIndex: currentNavbarIndex,
-        onTap: (index) {
-          setState(() {
-            currentNavbarIndex = index;
-          });
-          // 네비게이션 로직
-          switch (index) {
-            case 0: // Home
-              Navigator.pushReplacement(
-                context,
-                PageRouteBuilder(
-                  pageBuilder: (context, animation, secondaryAnimation) => const MainMenuScreen(),
-                  transitionDuration: Duration.zero,
-                  reverseTransitionDuration: Duration.zero,
-                ),
-              );
-              break;
-            case 1: // TripPlan
-              Navigator.pushReplacement(
-                context,
-                PageRouteBuilder(
-                  pageBuilder: (context, animation, secondaryAnimation) => const TripPlanDateScreen(),
-                  transitionDuration: Duration.zero,
-                  reverseTransitionDuration: Duration.zero,
-                ),
-              );
-              break;
-            case 2: // Community
-              // 현재 페이지가 Community이므로 아무 동작 안함
-              break;
-            case 3: // Profile
-              Navigator.pushReplacement(
-                context,
-                PageRouteBuilder(
-                  pageBuilder: (context, animation, secondaryAnimation) => const EditProfileScreen(),
-                  transitionDuration: Duration.zero,
-                  reverseTransitionDuration: Duration.zero,
-                ),
-              );
-              break;
-          }
-        },
-      ),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
-              children: [
+    return WillPopScope(
+      onWillPop: _handleWillPop,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFFFFCFC),
+        bottomNavigationBar: CustomNavbar(
+          currentIndex: currentNavbarIndex,
+          onTap: (index) {
+            setState(() {
+              currentNavbarIndex = index;
+            });
+            // 네비게이션 로직
+            switch (index) {
+              case 0: // Home
+                Navigator.pushReplacement(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) => const MainMenuScreen(),
+                    transitionDuration: Duration.zero,
+                    reverseTransitionDuration: Duration.zero,
+                  ),
+                );
+                break;
+              case 1: // TripPlan
+                Navigator.pushReplacement(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) => const TripPlanDateScreen(),
+                    transitionDuration: Duration.zero,
+                    reverseTransitionDuration: Duration.zero,
+                  ),
+                );
+                break;
+              case 2: // Community
+                // 현재 페이지가 Community이므로 아무 동작 안함
+                break;
+              case 3: // Profile
+                Navigator.pushReplacement(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) => const MypageScreen(),
+                    transitionDuration: Duration.zero,
+                    reverseTransitionDuration: Duration.zero,
+                  ),
+                );
+                break;
+            }
+          },
+        ),
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Column(
+                children: [
                 // Header
                 Padding(
                   padding: EdgeInsets.only(left: 17 * scale, right: 17 * scale, top: 16 * scale, bottom: 8 * scale),
@@ -221,9 +223,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
             ),
           ],
         ),
+        ),
       ),
     );
   }
+
+  Future<bool> _handleWillPop() async => false;
 
   Widget _buildListRow(Map<String, dynamic> post, double scale) {
     return InkWell(

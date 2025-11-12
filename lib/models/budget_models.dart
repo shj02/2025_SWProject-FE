@@ -22,7 +22,9 @@ class ExpenseEntry {
     required this.participants,
     this.payer,
     DateTime? createdAt,
-  }) : createdAt = createdAt ?? DateTime.now();
+    bool isSettled = false,
+  })  : createdAt = createdAt ?? DateTime.now(),
+        _isSettled = isSettled;
 
   final String id;
   final String title;
@@ -32,11 +34,14 @@ class ExpenseEntry {
   final List<String> participants;
   final String? payer;
   final DateTime createdAt;
+  bool _isSettled;
 
   bool get isShared => category == ExpenseCategory.shared;
 
   String? get personalOwner =>
       category == ExpenseCategory.personal && participants.isNotEmpty ? participants.first : null;
+
+  bool get isSettled => _isSettled;
 
   ExpenseEntry copyWith({
     String? title,
@@ -46,6 +51,7 @@ class ExpenseEntry {
     List<String>? participants,
     String? payer,
     DateTime? createdAt,
+    bool? isSettled,
   }) {
     return ExpenseEntry(
       id: id,
@@ -56,7 +62,10 @@ class ExpenseEntry {
       participants: participants ?? List<String>.from(this.participants),
       payer: payer ?? this.payer,
       createdAt: createdAt ?? this.createdAt,
+      isSettled: isSettled ?? _isSettled,
     );
   }
+
+  void markSettled() => _isSettled = true;
 }
 

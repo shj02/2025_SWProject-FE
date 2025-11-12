@@ -164,4 +164,18 @@ class TripRoom {
       completedSteps: completedSteps ?? this.completedSteps,
     );
   }
+
+  Set<String> updateCompletion({
+    required bool candidates,
+    required bool schedule,
+    required bool budget,
+    required bool checklist,
+  }) {
+    final Set<String> updated = Set<String>.from(completedSteps);
+    candidates ? updated.add('candidates') : updated.remove('candidates');
+    schedule ? updated.add('schedule') : updated.remove('schedule');
+    budget ? updated.add('budget') : updated.remove('budget');
+    checklist ? updated.add('checklist') : updated.remove('checklist');
+    return updated;
+  }
 }

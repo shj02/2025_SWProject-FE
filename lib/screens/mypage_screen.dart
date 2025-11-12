@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../widgets/custom_navbar.dart';
+import 'community_screen.dart';
 import 'edit_profile_screen.dart';
+import 'main_menu_screen.dart';
+import 'tripplan_date_screen.dart';
 
 class MypageScreen extends StatefulWidget {
   const MypageScreen({super.key});
@@ -56,13 +59,26 @@ class _MypageScreenState extends State<MypageScreen> {
   ];
 
   void _onNavbarTap(int index) {
+    if (_currentIndex == index) return;
+
     setState(() {
       _currentIndex = index;
-      // 네비게이션 로직 (나중에 구현)
-      // if (index != NavbarIndex.profile) {
-      //   Navigator.pushReplacementNamed(context, '/home'); // 예시
-      // }
     });
+
+    switch (index) {
+      case NavbarIndex.home:
+        _replaceWith(const MainMenuScreen());
+        break;
+      case NavbarIndex.tripPlan:
+        _replaceWith(const TripPlanDateScreen());
+        break;
+      case NavbarIndex.community:
+        _replaceWith(const CommunityScreen());
+        break;
+      case NavbarIndex.profile:
+        // 이미 프로필 탭이므로 아무 동작 없음
+        break;
+    }
   }
 
   void _handleMenuAction(String action) {
@@ -206,11 +222,13 @@ class _MypageScreenState extends State<MypageScreen> {
     const double designWidth = 402.0;
     final double scale = screenSize.width / designWidth;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFFFFCFC),
-      body: SafeArea(
-        child: Column(
-          children: [
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFFFFCFC),
+        body: SafeArea(
+          child: Column(
+            children: [
             // 상단 헤더
             Padding(
               padding: EdgeInsets.only(
@@ -464,11 +482,12 @@ class _MypageScreenState extends State<MypageScreen> {
             ),
 
             // 네비게이션 바
-            CustomNavbar(
-              currentIndex: _currentIndex,
-              onTap: _onNavbarTap,
-            ),
-          ],
+              CustomNavbar(
+                currentIndex: _currentIndex,
+                onTap: _onNavbarTap,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -495,6 +514,17 @@ class _MypageScreenState extends State<MypageScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  void _replaceWith(Widget screen) {
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => screen,
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
     );
   }
 }
