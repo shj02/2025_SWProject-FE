@@ -226,6 +226,10 @@ class _MypageScreenState extends State<MypageScreen> {
       onWillPop: () async => false,
       child: Scaffold(
         backgroundColor: const Color(0xFFFFFCFC),
+        bottomNavigationBar: CustomNavbar(
+          currentIndex: _currentIndex,
+          onTap: _onNavbarTap,
+        ),
         body: SafeArea(
           child: Column(
             children: [
@@ -480,12 +484,6 @@ class _MypageScreenState extends State<MypageScreen> {
                 ),
               ),
             ),
-
-            // 네비게이션 바
-              CustomNavbar(
-                currentIndex: _currentIndex,
-                onTap: _onNavbarTap,
-              ),
             ],
           ),
         ),
