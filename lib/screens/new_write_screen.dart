@@ -18,7 +18,8 @@ class _NewWriteScreenState extends State<NewWriteScreen> {
   final List<XFile> _media = [];
 
   bool get _canSave =>
-      _titleController.text.trim().isNotEmpty && _bodyController.text.trim().isNotEmpty;
+      _titleController.text.trim().isNotEmpty &&
+          _bodyController.text.trim().isNotEmpty;
 
   Future<void> _pickMedia() async {
     final action = await showModalBottomSheet<String>(
@@ -60,16 +61,22 @@ class _NewWriteScreenState extends State<NewWriteScreen> {
     try {
       switch (action) {
         case 'camera_photo':
-          picked = await _picker.pickImage(source: ImageSource.camera, imageQuality: 85);
+          picked = await _picker.pickImage(
+              source: ImageSource.camera, imageQuality: 85);
           break;
         case 'camera_video':
-          picked = await _picker.pickVideo(source: ImageSource.camera, maxDuration: const Duration(minutes: 5));
+          picked = await _picker.pickVideo(
+              source: ImageSource.camera,
+              maxDuration: const Duration(minutes: 5));
           break;
         case 'gallery_photo':
-          picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+          picked = await _picker.pickImage(
+              source: ImageSource.gallery, imageQuality: 85);
           break;
         case 'gallery_video':
-          picked = await _picker.pickVideo(source: ImageSource.gallery, maxDuration: const Duration(minutes: 10));
+          picked = await _picker.pickVideo(
+              source: ImageSource.gallery,
+              maxDuration: const Duration(minutes: 10));
           break;
       }
     } catch (e) {
@@ -101,7 +108,8 @@ class _NewWriteScreenState extends State<NewWriteScreen> {
       'likes': 0,
       'comments': 0,
       'time': '방금 전',
-      'attachments': _media.map((m) => m.path).where((p) => p.isNotEmpty).toList(),
+      'attachments':
+      _media.map((m) => m.path).where((p) => p.isNotEmpty).toList(),
     };
 
     Navigator.pop(context, post);
@@ -114,13 +122,16 @@ class _NewWriteScreenState extends State<NewWriteScreen> {
     final double scale = screenSize.width / designWidth;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFCFC),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0.5,
-        iconTheme: const IconThemeData(color: Color(0xFF1A0802)),
+        elevation: 0.3,
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: Color(0xFF1A0802)),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Text(
-          '새 글 작성',
+          '글쓰기',
           style: TextStyle(
             color: const Color(0xFF1A0802),
             fontWeight: FontWeight.w600,
@@ -129,14 +140,30 @@ class _NewWriteScreenState extends State<NewWriteScreen> {
         ),
         centerTitle: true,
         actions: [
-          TextButton(
-            onPressed: _canSave ? _save : null,
-            child: Text(
-              '저장',
-              style: TextStyle(
-                color: _canSave ? const Color(0xFFFC5858) : const Color(0xFF1A0802).withOpacity(0.3),
-                fontSize: 16 * scale,
-                fontWeight: FontWeight.w600,
+          Padding(
+            padding: EdgeInsets.only(right: 12 * scale),
+            child: ElevatedButton(
+              onPressed: _canSave ? _save : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                _canSave ? const Color(0xFFFFA0A0) : const Color(0xFFFFC4C4),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: EdgeInsets.symmetric(
+                  horizontal: 16 * scale,
+                  vertical: 6 * scale,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16 * scale),
+                ),
+                minimumSize: const Size(0, 0),
+              ),
+              child: Text(
+                '저장',
+                style: TextStyle(
+                  fontSize: 14 * scale,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
@@ -144,85 +171,68 @@ class _NewWriteScreenState extends State<NewWriteScreen> {
       ),
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.all(16 * scale),
+          padding: EdgeInsets.symmetric(horizontal: 16 * scale),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 제목 입력
-              GestureDetector(
-                onTap: () => _titleFocus.requestFocus(),
-                child: TextField(
-                  controller: _titleController,
-                  focusNode: _titleFocus,
-                  onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                    hintText: '제목을 입력하세요.',
-                    border: const UnderlineInputBorder(),
+              TextField(
+                controller: _titleController,
+                focusNode: _titleFocus,
+                onChanged: (_) => setState(() {}),
+                decoration: const InputDecoration(
+                  hintText: '제목을 입력하세요.',
+                  hintStyle: TextStyle(color: Color(0xFFB5B5B5)),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Color(0xFFD9D9D9)),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Color(0xFFB5B5B5)),
                   ),
                 ),
               ),
 
-              SizedBox(height: 12 * scale),
+              SizedBox(height: 16 * scale),
 
-              // 내용 입력
               Expanded(
                 child: GestureDetector(
                   onTap: () => _bodyFocus.requestFocus(),
-                  child: TextField(
-                    controller: _bodyController,
-                    focusNode: _bodyFocus,
-                    onChanged: (_) => setState(() {}),
-                    maxLines: null,
-                    expands: true,
-                    textAlignVertical: TextAlignVertical.top,
-                    decoration: InputDecoration(
-                      hintText: '내용을 입력해주세요.',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12 * scale),
+                  child: Stack(
+                    children: [
+                      TextField(
+                        controller: _bodyController,
+                        focusNode: _bodyFocus,
+                        onChanged: (_) => setState(() {}),
+                        maxLines: null,
+                        expands: true,
+                        textAlignVertical: TextAlignVertical.top,
+                        decoration: InputDecoration(
+                          hintText: '내용을 입력해주세요.',
+                          hintStyle:
+                          const TextStyle(color: Color(0xFFB5B5B5)),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.fromLTRB(
+                            0,
+                            8 * scale,
+                            40 * scale,
+                            8 * scale,
+                          ),
+                        ),
                       ),
-                      contentPadding: EdgeInsets.all(12 * scale),
-                    ),
+
+                      Positioned(
+                        right: 4 * scale,
+                        top: 4 * scale,
+                        child: IconButton(
+                          onPressed: _pickMedia,
+                          icon: const Icon(
+                            Icons.camera_alt,
+                            color: Color(0xFFFFA0A0),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-
-              SizedBox(height: 12 * scale),
-
-              // 첨부 미리보기 및 버튼
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: _pickMedia,
-                    icon: const Icon(Icons.camera_alt, color: Color(0xFFFC5858)),
-                  ),
-                  Expanded(
-                    child: SizedBox(
-                      height: 64 * scale,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _media.length,
-                        separatorBuilder: (_, __) => SizedBox(width: 8 * scale),
-                        itemBuilder: (context, index) {
-                          final file = _media[index];
-                          return ClipRRect(
-                            borderRadius: BorderRadius.circular(8 * scale),
-                            child: Container(
-                              width: 64 * scale,
-                              height: 64 * scale,
-                              color: const Color(0xFFE6E6E6),
-                              child: file.path.toLowerCase().endsWith('.mp4')
-                                  ? const Icon(Icons.videocam)
-                                  : Image.file(
-                                      File(file.path),
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => const Icon(Icons.image),
-                                    ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ],
               ),
             ],
           ),
@@ -231,4 +241,3 @@ class _NewWriteScreenState extends State<NewWriteScreen> {
     );
   }
 }
-
