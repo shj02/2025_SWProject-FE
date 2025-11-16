@@ -4,6 +4,7 @@ import 'community_screen.dart';
 import 'edit_profile_screen.dart';
 import 'main_menu_screen.dart';
 import 'tripplan_date_screen.dart';
+import 'login_screen.dart';
 
 class MypageScreen extends StatefulWidget {
   const MypageScreen({super.key});
@@ -16,46 +17,26 @@ class _MypageScreenState extends State<MypageScreen> {
   int _currentIndex = NavbarIndex.profile;
 
   // 사용자 정보 (나중에 실제 데이터로 교체)
-  String _userId = 'user123';
+  String _userId = 'qwer1234@naver.com';
   String _userName = '홍길동';
-  String _userPhone = '010-1234-5678';
-  String _userBirth = '1990-01-01';
+  String _userPhone = '010-****-6658';
+  String _userBirth = '2000-01-01';
   String _userNation = '대한민국';
-  String _userEmail = 'hong@example.com';
-  String _userProfileImage = ''; // 프로필 이미지 경로
+  String _userEmail = 'qwer1234@naver.com';
 
-  // 메뉴 항목
-  final List<Map<String, dynamic>> _menuItems = [
-    {
-      'icon': Icons.person_outline,
-      'title': '프로필 수정',
-      'action': 'edit_profile',
-    },
-    {
-      'icon': Icons.article_outlined,
-      'title': '내 게시글',
-      'action': 'my_posts',
-    },
-    {
-      'icon': Icons.favorite_outline,
-      'title': '좋아요한 게시글',
-      'action': 'liked_posts',
-    },
-    {
-      'icon': Icons.settings_outlined,
-      'title': '설정',
-      'action': 'settings',
-    },
-    {
-      'icon': Icons.help_outline,
-      'title': '고객센터',
-      'action': 'customer_service',
-    },
-    {
-      'icon': Icons.info_outline,
-      'title': '앱 정보',
-      'action': 'app_info',
-    },
+  // 여행 스타일 태그 (이모지 + 라벨)
+  final List<Map<String, String>> _travelTags = const [
+    {'emoji': '🎢', 'label': '액티비티'},
+    {'emoji': '🌇', 'label': '힐링 · 휴양'},
+    {'emoji': '🏛️', 'label': '문화 탐방'},
+    {'emoji': '🍽️', 'label': '맛집 탐방'},
+    {'emoji': '🛍️', 'label': '쇼핑'},
+    {'emoji': '🌲', 'label': '자연 · 풍경'},
+    {'emoji': '🏙️', 'label': '도시 중심형'},
+    {'emoji': '🏡', 'label': '로컬 중심형'},
+    {'emoji': '🍷', 'label': '럭셔리'},
+    {'emoji': '🍰', 'label': '일상 · 가성비'},
+    {'emoji': '🏨', 'label': '호텔 · 백팩커'},
   ];
 
   void _onNavbarTap(int index) {
@@ -76,30 +57,6 @@ class _MypageScreenState extends State<MypageScreen> {
         _replaceWith(const CommunityScreen());
         break;
       case NavbarIndex.profile:
-        // 이미 프로필 탭이므로 아무 동작 없음
-        break;
-    }
-  }
-
-  void _handleMenuAction(String action) {
-    switch (action) {
-      case 'edit_profile':
-        _showEditProfileDialog();
-        break;
-      case 'my_posts':
-        _showMyPosts();
-        break;
-      case 'liked_posts':
-        _showLikedPosts();
-        break;
-      case 'settings':
-        _showSettings();
-        break;
-      case 'customer_service':
-        _showCustomerService();
-        break;
-      case 'app_info':
-        _showAppInfo();
         break;
     }
   }
@@ -117,102 +74,139 @@ class _MypageScreenState extends State<MypageScreen> {
         ),
       ),
     );
-    
+
     if (result != null && result is Map<String, dynamic>) {
-      // 프로필 정보 업데이트
       setState(() {
         _userId = result['id'] ?? _userId;
         _userName = result['name'] ?? _userName;
         _userPhone = result['phone'] ?? _userPhone;
         _userBirth = result['birth'] ?? _userBirth;
         _userNation = result['nation'] ?? _userNation;
-        _userProfileImage = result['profileImage'] ?? _userProfileImage;
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('개인정보가 수정되었습니다.'),
-          backgroundColor: Color(0xFFFC5858),
+          backgroundColor: Color(0xFFFFA0A0),
         ),
       );
     }
   }
 
-  void _showEditProfileDialog() {
-    _navigateToEditProfile();
-  }
-
-  void _showMyPosts() {
+  void _showTravelStyleEdit() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('내 게시글 기능은 준비 중입니다.')),
+      const SnackBar(content: Text('여행 스타일 설정은 준비 중입니다.')),
     );
   }
 
-  void _showLikedPosts() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('좋아요한 게시글 기능은 준비 중입니다.')),
-    );
-  }
-
-  void _showSettings() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('설정 기능은 준비 중입니다.')),
-    );
-  }
-
-  void _showCustomerService() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('고객센터 기능은 준비 중입니다.')),
-    );
-  }
-
-  void _showAppInfo() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('앱 정보'),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('앱 이름: MongleTrip'),
-            SizedBox(height: 8),
-            Text('버전: 1.0.0'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('확인'),
-          ),
-        ],
-      ),
-    );
-  }
-
+  // ----- 커스텀 로그아웃 모달 (피그마 스타일) -----
   void _showLogoutDialog() {
+    final Size screenSize = MediaQuery.of(context).size;
+    const double designWidth = 402.0;
+    final double scale = screenSize.width / designWidth;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('로그아웃'),
-        content: const Text('정말 로그아웃하시겠습니까?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
+      barrierDismissible: false,
+      barrierColor: Colors.black.withOpacity(0.25),
+      builder: (ctx) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16 * scale),
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // 로그아웃 로직
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('로그아웃되었습니다.')),
-              );
-            },
-            child: const Text('로그아웃', style: TextStyle(color: Color(0xFFFC5858))),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              24 * scale,
+              24 * scale,
+              24 * scale,
+              20 * scale,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '로그아웃 하시겠습니까?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 20 * scale,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1A0802),
+                  ),
+                ),
+                SizedBox(height: 10 * scale),
+                Text(
+                  '로그아웃하면 다시 로그인이 필요합니다.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14 * scale,
+                    color: const Color(0xFF1A0802).withOpacity(0.7),
+                  ),
+                ),
+                SizedBox(height: 20 * scale),
+                // 로그아웃 버튼 (분홍색)
+                SizedBox(
+                  width: double.infinity,
+                  height: 44 * scale,
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: const Color(0xFFFFA0A0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8 * scale),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.of(ctx).pop(); // 모달 닫기
+                      // 로그인 화면으로 이동 + 스택 모두 제거
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                          builder: (_) => const LoginScreen(),
+                        ),
+                            (route) => false,
+                      );
+                    },
+                    child: Text(
+                      '로그아웃',
+                      style: TextStyle(
+                        fontSize: 16 * scale,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10 * scale),
+                // 취소 버튼 (화이트 + 테두리)
+                SizedBox(
+                  width: double.infinity,
+                  height: 44 * scale,
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8 * scale),
+                        side: const BorderSide(
+                          color: Color(0xFFFFA0A0),
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: Text(
+                      '취소',
+                      style: TextStyle(
+                        fontSize: 16 * scale,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFFFFA0A0),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -231,287 +225,317 @@ class _MypageScreenState extends State<MypageScreen> {
           onTap: _onNavbarTap,
         ),
         body: SafeArea(
-          child: Column(
-            children: [
-            // 상단 헤더
-            Padding(
-              padding: EdgeInsets.only(
-                top: 34 * scale,
-                left: 17 * scale,
-                right: 17 * scale,
-                bottom: 16 * scale,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: 22 * scale,
+                vertical: 24 * scale,
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(
-                    '마이페이지',
-                    style: TextStyle(
-                      fontSize: 28 * scale,
-                      color: const Color(0xFF1A0802),
-                      fontWeight: FontWeight.w600,
+                  // 상단 타이틀 (가운데 정렬)
+                  Center(
+                    child: Text(
+                      '마이페이지',
+                      style: TextStyle(
+                        fontSize: 26 * scale,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1A0802),
+                      ),
                     ),
                   ),
-                  IconButton(
-                    onPressed: () {
-                      // 설정 또는 다른 액션
-                    },
-                    icon: Icon(
-                      Icons.settings_outlined,
-                      size: 28 * scale,
-                      color: const Color(0xFF1A0802),
-                    ),
-                  ),
+                  SizedBox(height: 24 * scale),
+
+                  // 계정 설정 카드
+                  _buildAccountCard(scale),
+
+                  SizedBox(height: 20 * scale),
+
+                  // 여행 스타일 카드
+                  _buildTravelStyleCard(scale),
+
+                  SizedBox(height: 28 * scale),
+
+                  // 로그아웃 버튼
+                  _buildLogoutButton(scale),
                 ],
               ),
             ),
-
-            // 메인 콘텐츠
-            Expanded(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 17 * scale),
-                  child: Column(
-                    children: [
-                      // 프로필 섹션
-                      Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.all(24 * scale),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12 * scale),
-                          border: Border.all(
-                            color: const Color(0xFF1A0802).withOpacity(0.1),
-                            width: 1,
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            // 프로필 이미지
-                            Stack(
-                              children: [
-                                Container(
-                                  width: 100 * scale,
-                                  height: 100 * scale,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: const Color(0xFFE6E6E6),
-                                    border: Border.all(
-                                      color: const Color(0xFFFC5858),
-                                      width: 3 * scale,
-                                    ),
-                                  ),
-                                  child: _userProfileImage.isNotEmpty
-                                      ? ClipOval(
-                                          child: Image.asset(
-                                            _userProfileImage,
-                                            fit: BoxFit.cover,
-                                          ),
-                                        )
-                                      : Icon(
-                                          Icons.person,
-                                          size: 50 * scale,
-                                          color: const Color(0xFF1A0802).withOpacity(0.5),
-                                        ),
-                                ),
-                                Positioned(
-                                  bottom: 0,
-                                  right: 0,
-                                  child: Container(
-                                    width: 32 * scale,
-                                    height: 32 * scale,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFFC5858),
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: Colors.white,
-                                        width: 2 * scale,
-                                      ),
-                                    ),
-                                    child: Icon(
-                                      Icons.camera_alt,
-                                      size: 16 * scale,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 16 * scale),
-                            // 사용자 이름과 변경 버튼
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  _userName,
-                                  style: TextStyle(
-                                    fontSize: 24 * scale,
-                                    color: const Color(0xFF1A0802),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                SizedBox(width: 8 * scale),
-                                TextButton(
-                                  onPressed: _navigateToEditProfile,
-                                  style: TextButton.styleFrom(
-                                    padding: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 4 * scale),
-                                    minimumSize: Size.zero,
-                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  ),
-                                  child: Text(
-                                    '변경',
-                                    style: TextStyle(
-                                      fontSize: 16 * scale,
-                                      color: const Color(0xFFFC5858),
-                                      fontWeight: FontWeight.w400,
-                                      decoration: TextDecoration.underline,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 8 * scale),
-                            // 사용자 이메일
-                            Text(
-                              _userEmail,
-                              style: TextStyle(
-                                fontSize: 16 * scale,
-                                color: const Color(0xFF1A0802).withOpacity(0.6),
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                            SizedBox(height: 20 * scale),
-                            // 통계 정보 (선택적)
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                _buildStatItem('게시글', '0', scale),
-                                _buildStatItem('좋아요', '0', scale),
-                                _buildStatItem('댓글', '0', scale),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      SizedBox(height: 24 * scale),
-
-                      // 메뉴 리스트
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12 * scale),
-                          border: Border.all(
-                            color: const Color(0xFF1A0802).withOpacity(0.1),
-                            width: 1,
-                          ),
-                        ),
-                        child: Column(
-                          children: _menuItems.asMap().entries.map((entry) {
-                            final index = entry.key;
-                            final item = entry.value;
-                            return Column(
-                              children: [
-                                ListTile(
-                                  leading: Icon(
-                                    item['icon'] as IconData,
-                                    color: const Color(0xFF1A0802),
-                                    size: 24 * scale,
-                                  ),
-                                  title: Text(
-                                    item['title'] as String,
-                                    style: TextStyle(
-                                      fontSize: 18 * scale,
-                                      color: const Color(0xFF1A0802),
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                  trailing: Icon(
-                                    Icons.chevron_right,
-                                    color: const Color(0xFF1A0802).withOpacity(0.3),
-                                    size: 24 * scale,
-                                  ),
-                                  onTap: () => _handleMenuAction(item['action'] as String),
-                                ),
-                                if (index < _menuItems.length - 1)
-                                  Divider(
-                                    height: 1,
-                                    thickness: 1,
-                                    color: const Color(0xFFE5E5EA),
-                                    indent: 60 * scale,
-                                  ),
-                              ],
-                            );
-                          }).toList(),
-                        ),
-                      ),
-
-                      SizedBox(height: 24 * scale),
-
-                      // 로그아웃 버튼
-                      Container(
-                        width: double.infinity,
-                        height: 56 * scale,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12 * scale),
-                          border: Border.all(
-                            color: const Color(0xFF1A0802).withOpacity(0.1),
-                            width: 1,
-                          ),
-                        ),
-                        child: ListTile(
-                          leading: Icon(
-                            Icons.logout,
-                            color: const Color(0xFFFC5858),
-                            size: 24 * scale,
-                          ),
-                          title: Text(
-                            '로그아웃',
-                            style: TextStyle(
-                              fontSize: 18 * scale,
-                              color: const Color(0xFFFC5858),
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                          onTap: _showLogoutDialog,
-                        ),
-                      ),
-
-                      SizedBox(height: 24 * scale),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildStatItem(String label, String value, double scale) {
-    return Column(
-      children: [
-        Text(
-          value,
+  Widget _buildAccountCard(double scale) {
+    final labelStyle = TextStyle(
+      fontSize: 14 * scale,
+      color: const Color(0xFF1A0802),
+      fontWeight: FontWeight.w400,
+    );
+    final valueStyle = TextStyle(
+      fontSize: 16 * scale,
+      color: const Color(0xFF1A0802),
+      fontWeight: FontWeight.w500,
+    );
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(
+        20 * scale,
+        18 * scale,
+        20 * scale,
+        18 * scale,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF5F5),
+        borderRadius: BorderRadius.circular(16 * scale),
+        border: Border.all(
+          color: const Color(0xFFFFA0A0),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 상단 제목 + 변경 버튼
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.person_outline,
+                    size: 22 * scale,
+                    color: const Color(0xFF1A0802),
+                  ),
+                  SizedBox(width: 6 * scale),
+                  Text(
+                    '계정 설정',
+                    style: TextStyle(
+                      fontSize: 19 * scale,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF1A0802),
+                    ),
+                  ),
+                ],
+              ),
+              TextButton(
+                onPressed: _navigateToEditProfile,
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14 * scale,
+                    vertical: 6 * scale,
+                  ),
+                  minimumSize: Size(0, 0),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  backgroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18 * scale),
+                    side: const BorderSide(
+                      color: Color(0xFFFFA0A0),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Text(
+                  '변경',
+                  style: TextStyle(
+                    fontSize: 14 * scale,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF1A0802),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16 * scale),
+
+          Text('아이디', style: labelStyle),
+          SizedBox(height: 2 * scale),
+          Text(_userId, style: valueStyle),
+          SizedBox(height: 10 * scale),
+
+          Text('이름', style: labelStyle),
+          SizedBox(height: 2 * scale),
+          Text(_userName, style: valueStyle),
+          SizedBox(height: 10 * scale),
+
+          Text('전화번호', style: labelStyle),
+          SizedBox(height: 2 * scale),
+          Text(_userPhone, style: valueStyle),
+          SizedBox(height: 10 * scale),
+
+          Text('생년월일', style: labelStyle),
+          SizedBox(height: 2 * scale),
+          Text(_userBirth, style: valueStyle),
+          SizedBox(height: 10 * scale),
+
+          Text('국적', style: labelStyle),
+          SizedBox(height: 2 * scale),
+          Text(_userNation, style: valueStyle),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTravelStyleCard(double scale) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(
+        20 * scale,
+        18 * scale,
+        20 * scale,
+        18 * scale,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF5F5),
+        borderRadius: BorderRadius.circular(16 * scale),
+        border: Border.all(
+          color: const Color(0xFFFFA0A0),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 상단 제목 + 변경 버튼
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.menu_book_outlined,
+                    size: 22 * scale,
+                    color: const Color(0xFF1A0802),
+                  ),
+                  SizedBox(width: 6 * scale),
+                  Text(
+                    '여행 스타일',
+                    style: TextStyle(
+                      fontSize: 19 * scale,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF1A0802),
+                    ),
+                  ),
+                ],
+              ),
+              TextButton(
+                onPressed: _showTravelStyleEdit,
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14 * scale,
+                    vertical: 6 * scale,
+                  ),
+                  minimumSize: Size(0, 0),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  backgroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18 * scale),
+                    side: const BorderSide(
+                      color: Color(0xFFFFA0A0),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Text(
+                  '변경',
+                  style: TextStyle(
+                    fontSize: 14 * scale,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF1A0802),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16 * scale),
+
+          Wrap(
+            spacing: 10 * scale,
+            runSpacing: 8 * scale,
+            children: _travelTags.map((tag) {
+              return _buildTravelTag(
+                scale: scale,
+                emoji: tag['emoji']!,
+                label: tag['label']!,
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTravelTag({
+    required double scale,
+    required String emoji,
+    required String label,
+  }) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 14 * scale,
+        vertical: 6 * scale,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18 * scale),
+        border: Border.all(
+          color: const Color(0xFFFFA0A0).withOpacity(0.7),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 3 * scale,
+            offset: Offset(0, 1 * scale),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            emoji,
+            style: TextStyle(fontSize: 16 * scale),
+          ),
+          SizedBox(width: 4 * scale),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14 * scale,
+              color: const Color(0xFF1A0802),
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton(double scale) {
+    return SizedBox(
+      width: double.infinity,
+      height: 56 * scale,
+      child: TextButton(
+        style: TextButton.styleFrom(
+          backgroundColor: const Color(0xFFFFA0A0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14 * scale),
+          ),
+        ),
+        onPressed: _showLogoutDialog,
+        child: Text(
+          '로그아웃',
           style: TextStyle(
-            fontSize: 20 * scale,
-            color: const Color(0xFF1A0802),
+            fontSize: 18 * scale,
             fontWeight: FontWeight.w600,
+            color: Colors.white,
           ),
         ),
-        SizedBox(height: 4 * scale),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14 * scale,
-            color: const Color(0xFF1A0802).withOpacity(0.6),
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-      ],
+      ),
     );
   }
 
