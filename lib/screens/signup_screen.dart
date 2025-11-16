@@ -3,11 +3,22 @@ import 'package:flutter/services.dart';
 import '../services/user_service.dart';
 
 class SignupScreen extends StatefulWidget {
-  const SignupScreen({super.key});
+  // ✅ 카카오에서 받은 값들
+  final int? kakaoId;
+  final String? email;
+  final String? defaultNickname;
+
+  const SignupScreen({
+    super.key,
+    this.kakaoId,
+    this.email,
+    this.defaultNickname,
+  });
 
   @override
   State<SignupScreen> createState() => _SignupScreenState();
 }
+
 
 class _SignupScreenState extends State<SignupScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();

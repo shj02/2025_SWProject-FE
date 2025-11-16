@@ -14,17 +14,49 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
-  Future<void> _loginWithKakao() async {
-    try {
-      setState(() {
-        _isLoading = true;
-      });
+  /// ✅ 카카오 accessToken을 백엔드로 보내는 함수
+  Future<int?> _sendKakaoTokenToBackend(String accessToken) async {
+    debugPrint('🛰 백엔드 로그인 요청 보냄');
 
+    try {
+      // ⚠️ 여기 URL을 네 백엔드 주소로 바꿔줘!
+      // - 에뮬레이터: http://10.0.2.2:8080/auth/kakao
+      // - 실제 폰:    http://<내 컴퓨터 IP>:8080/auth/kakao
+      final url = Uri.parse('http://192.168.200.107:8080/auth/kakao');
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'accessToken': accessToken,
+        }),
+      );
+
+      debugPrint('⬇️ 백엔드 응답 코드: ${response.statusCode}');
+      debugPrint('⬇️ 백엔드 응답 바디: ${response.body}');
+
+      return response.statusCode;
+    } catch (e, st) {
+      debugPrint('❌ 백엔드 통신 에러: $e');
+      debugPrint('stackTrace: $st');
+      return null;
+    }
+  }
+
+  /// ✅ 카카오 로그인 전체 플로우 (카카오 SDK → 백엔드 → 화면 이동)
+  Future<void> _loginWithKakao() async {
+    if (_isLoading) return;
+
+    setState(() => _isLoading = true);
+
+    try {
       debugPrint('로그인 버튼 클릭됨 - KAKAO 로그인 시도');
 
       OAuthToken token;
 
-      // 카카오톡 앱 설치 여부에 따라 로그인 방식 선택
+      // 카카오톡 앱 설치 여부에 따라 분기
       if (await isKakaoTalkInstalled()) {
         token = await UserApi.instance.loginWithKakaoTalk();
       } else {
@@ -35,170 +67,143 @@ class _LoginScreenState extends State<LoginScreen> {
       debugPrint('accessToken: ${token.accessToken}');
       debugPrint('idToken: ${token.idToken}');
 
-      // ─────────────────────────────────────────
-      // TODO: 나중에 백엔드 연동할 때 여기서 호출
-      // final response = await http.post(
-      //   Uri.parse('http://백엔드주소/api/auth/kakao'),
-      //   headers: {'Content-Type': 'application/json'},
-      //   body: jsonEncode({'accessToken': token.accessToken}),
-      // );
-      //
-      // debugPrint('백엔드 응답: ${response.statusCode} ${response.body}');
-      //
-      // if (response.statusCode == 200) {
-      //   final data = jsonDecode(response.body);
-      //   final bool isRegistered = data['isRegistered'] ?? false;
-      //
-      //   if (isRegistered) {
-      //     // 이미 회원 → 메인으로
-      //     if (!mounted) return;
-      //     Navigator.pushReplacementNamed(context, '/main');
-      //   } else {
-      //     // 첫 로그인 → 회원가입 화면
-      //     if (!mounted) return;
-      //     Navigator.pushReplacementNamed(context, '/signup');
-      //   }
-      // } else {
-      //   throw Exception('백엔드 로그인 실패: ${response.statusCode}');
-      // }
-      // ─────────────────────────────────────────
+      // 🔥 백엔드로 토큰 전송
+      final statusCode = await _sendKakaoTokenToBackend(token.accessToken);
 
-      // ★ 지금은 백엔드 연동 전이니까
-      //    "카카오 로그인 성공하면 항상 회원가입 화면으로 보내기"
       if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/signup');
+
+      if (statusCode == 200) {
+        // 👉 백엔드에서 "기존 회원" 이라고 응답했다고 가정
+        debugPrint('✅ 백엔드 로그인 성공(기존 회원) → 메인으로 이동');
+        Navigator.pushReplacementNamed(context, '/main');
+      } else {
+        // 👉 그 외 코드(201/404 등)는 "신규 회원"이라고 가정하고 회원가입 화면으로
+        debugPrint('ℹ️ 신규 회원으로 판단 → 회원가입 화면으로 이동');
+        Navigator.pushReplacementNamed(context, '/signup');
+      }
     } catch (e, st) {
       debugPrint('❌ 카카오 로그인 실패: $e');
-      debugPrint(st.toString());
+      debugPrint('stackTrace: $st');
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('카카오 로그인 중 오류가 발생했어요.\n$e'),
+        const SnackBar(
+          content: Text('카카오 로그인에 실패했어요. 다시 시도해 주세요.'),
         ),
       );
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
 
-  void _loginWithNaver() {
-    // TODO: 네이버 로그인 연동 예정
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('네이버 로그인은 아직 준비 중이에요.')),
-    );
-  }
+  /// ✅ 네이버 로그인 (임시: 아직 미구현 안내만)
+  Future<void> _loginWithNaver() async {
+    if (_isLoading) return;
 
-  void _goToEmailSignup() {
-    Navigator.pushNamed(context, '/signup');
+    setState(() => _isLoading = true);
+
+    try {
+      debugPrint('네이버 로그인 시도 (아직 구현 안됨)');
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('네이버 로그인은 아직 준비 중이에요 😅'),
+        ),
+      );
+    } catch (e, st) {
+      debugPrint('❌ 네이버 로그인 실패: $e');
+      debugPrint('stackTrace: $st');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
-        child: Stack(
+        child: Column(
           children: [
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 40),
-                  const Text(
-                    'MongleTrip',
-                    style: TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 80),
-
-                  // 카카오 로그인 버튼
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 60,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _loginWithKakao,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFEE500),
-                          foregroundColor: Colors.black,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 4,
-                        ),
-                        child: const Text(
-                          '카카오톡으로 로그인',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // 네이버 로그인 버튼 (임시)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 60,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _loginWithNaver,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF03C75A),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 4,
-                        ),
-                        child: const Text(
-                          '네이버로 로그인',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 40),
-
-                  // 이메일 회원가입
-                  TextButton(
-                    onPressed: _isLoading ? null : _goToEmailSignup,
-                    child: const Text(
-                      '이메일로 회원가입',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Color(0xFF6A1B9A),
-                      ),
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 80),
+            const Text(
+              'MongleTrip',
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
               ),
             ),
-
-            // 로딩 인디케이터
-            if (_isLoading)
-              Container(
-                color: Colors.black.withOpacity(0.2),
-                child: const Center(
-                  child: CircularProgressIndicator(),
+            const SizedBox(height: 40),
+            const Text(
+              '간편하게 로그인하고\n몽글몽글한 여행을 시작해요',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 18),
+            ),
+            const Spacer(),
+            // ✅ 카카오 로그인 버튼
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+              child: SizedBox(
+                width: double.infinity,
+                height: 60,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _loginWithKakao,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFEE500),
+                    foregroundColor: Colors.black87,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 4,
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                      : const Text(
+                    '카카오로 로그인',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
+            ),
+            const SizedBox(height: 12),
+            // ✅ 네이버 로그인 버튼 (임시)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+              child: SizedBox(
+                width: double.infinity,
+                height: 60,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _loginWithNaver,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF03C75A),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 4,
+                  ),
+                  child: const Text(
+                    '네이버로 로그인',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
           ],
         ),
       ),
