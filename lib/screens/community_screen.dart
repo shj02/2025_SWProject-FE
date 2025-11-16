@@ -259,99 +259,99 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   Widget _buildListRow(Map<String, dynamic> post, double scale) {
     return InkWell(
-        onTap: () => _onOpenPost(post['id'] as String, post['title'] as String),
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 10 * scale),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-          Expanded(
-          child: Column(
+      onTap: () => _onOpenPost(post['id'] as String, post['title'] as String),
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 10 * scale),
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-          Text(
-          post['title'] as String,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 18 * scale,
-              color: const Color(0xFF1A0802),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          SizedBox(height: 6 * scale),
-          Text(
-            post['preview'] as String,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 13 * scale,
-              color: const Color(0xFF1A0802),
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          SizedBox(height: 6 * scale),
-          Row(
-            children: [
-          Text(
-          post['time'] as String,
-            style: TextStyle(
-              fontSize: 12 * scale,
-              color: const Color(0xFF1A0802),
-            ),
-          ),
-          SizedBox(width: 8 * scale),
-          Icon(
-            Icons.favorite,
-            color: const Color(0xFFFFA0A0), // ❤️ 변경
-            size: 14 * scale,
-          ),
-          SizedBox(width: 2 * scale),
-
-              Text(
-                '${post['likes']}',
-                style: TextStyle(
-                  fontSize: 12 * scale,
-                  color: const Color(0xFF1A0802),
-                ),
-              ),
-              SizedBox(width: 8 * scale),
-              Icon(
-                Icons.chat_bubble_outline,
-                color: const Color(0xFF1A0802),
-                size: 14 * scale,
-              ),
-              SizedBox(width: 2 * scale),
-              Text(
-                '${post['comments']}',
-                style: TextStyle(
-                  fontSize: 12 * scale,
-                  color: const Color(0xFF1A0802),
-                ),
-              ),
-            ],
-          ),
-            ],
-          ),
-          ),
-              SizedBox(width: 10 * scale),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8 * scale),
-                child: Container(
-                  width: 92 * scale,
-                  height: 92 * scale,
-                  color: const Color(0xFFE6E6E6),
-                  child: Image.network(
-                    'https://picsum.photos/200/200?random=${post['id']}',
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                        Container(color: const Color(0xFFE6E6E6)),
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    post['title'] as String,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 18 * scale,
+                      color: const Color(0xFF1A0802),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
+                  SizedBox(height: 6 * scale),
+                  Text(
+                    post['preview'] as String,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13 * scale,
+                      color: const Color(0xFF1A0802),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  SizedBox(height: 6 * scale),
+                  Row(
+                    children: [
+                      Text(
+                        post['time'] as String,
+                        style: TextStyle(
+                          fontSize: 12 * scale,
+                          color: const Color(0xFF1A0802),
+                        ),
+                      ),
+                      SizedBox(width: 8 * scale),
+                      Icon(
+                        Icons.favorite,
+                        color: const Color(0xFFFFA0A0), // ❤️ 변경
+                        size: 14 * scale,
+                      ),
+                      SizedBox(width: 2 * scale),
+
+                      Text(
+                        '${post['likes']}',
+                        style: TextStyle(
+                          fontSize: 12 * scale,
+                          color: const Color(0xFF1A0802),
+                        ),
+                      ),
+                      SizedBox(width: 8 * scale),
+                      Icon(
+                        Icons.chat_bubble_outline,
+                        color: const Color(0xFF1A0802),
+                        size: 14 * scale,
+                      ),
+                      SizedBox(width: 2 * scale),
+                      Text(
+                        '${post['comments']}',
+                        style: TextStyle(
+                          fontSize: 12 * scale,
+                          color: const Color(0xFF1A0802),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 10 * scale),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8 * scale),
+              child: Container(
+                width: 92 * scale,
+                height: 92 * scale,
+                color: const Color(0xFFE6E6E6),
+                child: Image.network(
+                  'https://picsum.photos/200/200?random=${post['id']}',
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) =>
+                      Container(color: const Color(0xFFE6E6E6)),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
     );
   }
 
