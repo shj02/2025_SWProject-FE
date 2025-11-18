@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:sw_project_fe/config/api_config.dart';
 
 class AuthApi {
   // 에뮬레이터에서 로컬 서버 쓰면:
   //  - Android: http://10.0.2.2:8080
   //  - iOS 시뮬레이터: http://localhost:8080
-  static const String baseUrl = 'http://10.0.2.2:8080';
 
   static Future<LoginResponse> loginWithKakao(String kakaoAccessToken) async {
     final res = await http.post(

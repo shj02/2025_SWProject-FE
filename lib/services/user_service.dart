@@ -1,68 +1,97 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-
-// --- 💡 Base URL 설정 ---
-// 에뮬레이터일 때: const baseUrl = 'http://10.0.2.2:8080';
-// 물리 기기(실제 휴대폰)일 때: PC IP로 바꿔야 함!! 예: 192.168.0.10
-// const String baseUrl = 'http://10.0.2.2:8080'; // 에뮬레이터 쓸 땐 이대로
-const String baseUrl = 'http://192.168.0.23:8080';
-
+// lib/services/user_service.dart
 
 class UserService {
+  // 싱글톤
   static final UserService _instance = UserService._internal();
   factory UserService() => _instance;
   UserService._internal();
 
-  String? _userName;
-  String? get userName => _userName;
+  // ---------------------------
+  // 1) 백엔드 인증 관련 (기존 기능)
+  // ---------------------------
 
+  String? _jwtToken;   // 서버에서 내려준 JWT
+  int? _userId;        // 서버 DB의 숫자 userId
+
+  void setAuthToken(String token) {
+    _jwtToken = token;
+  }
+
+  String? get authToken => _jwtToken;
+
+  void setUserId(int id) {
+    _userId = id;
+  }
+
+  int? get userId => _userId;
+
+  // -----------------------------------
+  // 2) 앱에서 표시용으로 쓰는 프로필 정보 (프론트 전용)
+  // -----------------------------------
+
+  // "아이디" (이메일처럼 보이는 값) - 서버와는 전혀 안 묶임
+  String? _accountId;
+
+  // 이름 / 전화번호 / 생년월일 / 국적
+  String? _userName;
+  String? _phoneNumber;
+  String? _birthdate;
+  String? _nationality;
+
+  // 마이페이지 이메일 (카카오 이메일 X, 사용자가 직접 입력한 값)
+  String? _email;
+
+  // ---- accountId / 이메일(아이디) ----
+  void setAccountId(String? id) {
+    _accountId = id;
+  }
+
+  String? get accountId => _accountId;
+
+  void setEmail(String? email) {
+    _email = email;
+  }
+
+  String? get email => _email;
+
+  // ---- 이름 / 전화번호 / 생년월일 / 국적 ----
   void setUserName(String name) {
     _userName = name;
   }
 
-  void clearUserName() {
-    _userName = null;
+  String? get userName => _userName;
+
+  void setPhoneNumber(String? phone) {
+    _phoneNumber = phone;
   }
 
-  /// 소셜 로그인 시, 백엔드 서버에 accessToken 전송
-  Future<bool> attemptSocialLogin(String provider, String token) async {
-    late final Uri url;
+  String? get phoneNumber => _phoneNumber;
 
-    if (provider == 'KAKAO') {
-      url = Uri.parse('$baseUrl/api/auth/kakao');
-    } else if (provider == 'NAVER') {
-      url = Uri.parse('$baseUrl/api/auth/naver');
-    } else {
-      print('[UserService] Unknown provider: $provider');
-      return false;
-    }
+  void setBirthdate(String? birth) {
+    _birthdate = birth;
+  }
 
-    print('[UserService] POST $url');
-    print('[UserService] body: {"accessToken": "$token"}');
+  String? get birthdate => _birthdate;
 
-    try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'accessToken': token,
-        }),
-      );
+  void setNationality(String? nation) {
+    _nationality = nation;
+  }
 
-      print('[UserService] status: ${response.statusCode}');
-      print('[UserService] response: ${response.body}');
+  String? get nationality => _nationality;
 
-      if (response.statusCode == 200) {
-        // TODO: 여기서 응답(JSON)을 파싱해서 JWT/userId/isRegistered 저장 가능
-        return true;
-      } else {
-        return false;
-      }
-    } catch (e) {
-      print('[UserService] 네트워크 오류: $e');
-      return false;
-    }
+  // ---------------------------
+  // 3) 전체 리셋 (로그아웃 시)
+  // ---------------------------
+
+  void clear() {
+    _jwtToken = null;
+    _userId = null;
+
+    _accountId = null;
+    _userName = null;
+    _phoneNumber = null;
+    _birthdate = null;
+    _nationality = null;
+    _email = null;
   }
 }
