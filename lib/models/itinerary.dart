@@ -39,4 +39,13 @@ class ItineraryItem {
       memo: json['memo'] ?? '',
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'time': time,
+      'title': title,
+      'location': location,
+      'memo': memo,
+    };
+  }
 }

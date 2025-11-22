@@ -25,7 +25,7 @@ class Post {
       id: json['id'] ?? 0,
       title: json['title'] ?? '제목 없음',
       content: json['content'] ?? '',
-      nickname: json['nickname'] ?? '익명',
+      nickname: json['nickname'] ?? '루미',
       likeCount: json['likeCount'] ?? 0,
       commentCount: json['commentCount'] ?? 0,
       createdAt: json['createdAt'] ?? '',

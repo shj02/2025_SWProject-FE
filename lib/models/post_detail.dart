@@ -30,7 +30,7 @@ class PostDetail {
       id: json['id'] ?? 0,
       title: json['title'] ?? '제목 없음',
       content: json['content'] ?? '',
-      nickname: json['nickname'] ?? '익명',
+      nickname: json['nickname'] ?? '루미',
       likeCount: json['likeCount'] ?? 0,
       createdAt: json['createdAt'] ?? '',
       isLiked: json['liked'] ?? false, // API 명세에 따라 'liked' 필드로 가정
@@ -60,7 +60,7 @@ class Comment {
     return Comment(
       id: json['id'] ?? 0,
       content: json['content'] ?? '',
-      nickname: json['nickname'] ?? '익명',
+      nickname: json['nickname'] ?? '루미',
       createdAt: json['createdAt'] ?? '',
       isOwner: json['owner'] ?? false, // API 명세에 따라 'owner' 필드로 가정
     );

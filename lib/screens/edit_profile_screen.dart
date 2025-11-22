@@ -57,22 +57,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     setState(() => _isLoading = true);
 
-    try {
-      final profileData = {
-        'name': _nameController.text.trim(),
-        'phoneNumber': _phoneController.text.trim(),
-        'birthdate': _birthController.text.trim(),
-        'nationality': _nationController.text.trim(),
-      };
+    final profileData = {
+      'name': _nameController.text.trim(),
+      'phoneNumber': _phoneController.text.trim(),
+      'birthdate': _birthController.text.trim(),
+      'nationality': _nationController.text.trim(),
+    };
 
-      await AuthService().updateProfile(profileData);
+    try {
+      await AuthService().updateProfile(context, profileData);
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('개인정보가 수정되었습니다.')),
       );
-      Navigator.pop(context, true); // 성공 시 true와 함께 화면 닫기
+      Navigator.pop(context, profileData); // 성공 시 수정된 데이터와 함께 화면 닫기
 
     } catch (e) {
       if (!mounted) return;
@@ -95,7 +95,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0.5,
-        iconTheme: const IconThemeData(color: Color(0xFF1A0802)),
+        iconTheme: const IconThemeData(color: const Color(0xFF1A0802)),
         title: Text('개인정보 수정', style: TextStyle(color: const Color(0xFF1A0802), fontWeight: FontWeight.w600, fontSize: 18 * scale)),
         centerTitle: true,
       ),

@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; 
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'package:sw_project_fe/services/auth_api.dart';
-import 'package:sw_project_fe/services/user_service.dart';
 
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/travel_preference_screen.dart';
 import 'screens/main_menu_screen.dart';
-import 'screens/tripplan_date_screen.dart';
 import 'screens/community_screen.dart';
 import 'screens/mypage_screen.dart';
 import 'screens/new_write_screen.dart';
@@ -32,7 +30,7 @@ Future<void> main() async {
 /// 앱 시작 시점에 실행되는 강제 로그아웃 함수
 Future<void> _forceInitialLogout() async {
   // 1. 서버에 로그아웃 요청 및 클라이언트 토큰 삭제
-  await AuthService().logout();
+  await AuthService().clearSession();
 
   // 2. 카카오 SDK에 남아있는 토큰 삭제 (선택적이지만 안전함)
   try {
@@ -40,9 +38,6 @@ Future<void> _forceInitialLogout() async {
   } catch (e) {
     // 이미 로그아웃된 경우 등 오류 무시
   }
-
-  // 3. 앱 메모리에 있는 사용자 정보 삭제
-  UserService().clear();
 }
 
 class MyApp extends StatelessWidget {

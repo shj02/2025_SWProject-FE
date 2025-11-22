@@ -17,7 +17,9 @@ class MypageScreen extends StatefulWidget {
 
 class _MypageScreenState extends State<MypageScreen> {
   int _currentIndex = NavbarIndex.profile;
-  late Future<UserProfile> _userProfileFuture;
+  UserProfile? _userProfile;
+  bool _isLoading = true;
+  String? _error;
 
   final List<Map<String, String>> _allTravelTags = const [
     {'emoji': '🏃‍♀️', 'label': '액티비티'},
@@ -39,10 +41,27 @@ class _MypageScreenState extends State<MypageScreen> {
     _loadUserProfile();
   }
 
-  void _loadUserProfile() {
+  Future<void> _loadUserProfile() async {
     setState(() {
-      _userProfileFuture = AuthService().getProfile();
+      _isLoading = true;
+      _error = null;
     });
+    try {
+      final profile = await AuthService().getProfile(context);
+      if (mounted) {
+        setState(() {
+          _userProfile = profile;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = '프로필 정보를 불러오는 데 실패했습니다: ${e.toString()}';
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -50,29 +69,40 @@ class _MypageScreenState extends State<MypageScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFFFFCFC),
       bottomNavigationBar: CustomNavbar(currentIndex: _currentIndex, onTap: _onNavbarTap),
-      body: FutureBuilder<UserProfile>(
-        future: _userProfileFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('오류: ${snapshot.error}'));
-          }
-          if (!snapshot.hasData) {
-            return const Center(child: Text('사용자 정보를 불러올 수 없습니다.'));
-          }
-          return _buildProfileView(snapshot.data!);
-        },
-      ),
+      body: _buildBody(),
     );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(_error!),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadUserProfile,
+              child: const Text('다시 시도'),
+            ),
+          ],
+        ),
+      );
+    }
+    if (_userProfile != null) {
+      return _buildProfileView(_userProfile!);
+    }
+    return const Center(child: Text('사용자 정보를 불러올 수 없습니다.'));
   }
 
   Widget _buildProfileView(UserProfile userProfile) {
     final scale = MediaQuery.of(context).size.width / 402.0;
     return SafeArea(
       child: RefreshIndicator(
-        onRefresh: () async => _loadUserProfile(),
+        onRefresh: _loadUserProfile,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.fromLTRB(18 * scale, 20 * scale, 18 * scale, 16 * scale),
@@ -178,20 +208,34 @@ class _MypageScreenState extends State<MypageScreen> {
   }
 
   void _navigateToEditProfile(UserProfile profile) async {
-    final result = await Navigator.push(
+    final updatedProfileData = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => EditProfileScreen(
-        initialName: profile.name,
-        initialPhone: profile.phoneNumber,
-        initialBirth: profile.birthdate,
-        initialNation: profile.nationality,
-        initialId: profile.email,
-      )),
+      MaterialPageRoute(
+        builder: (context) => EditProfileScreen(
+          initialName: profile.name,
+          initialPhone: profile.phoneNumber,
+          initialBirth: profile.birthdate,
+          initialNation: profile.nationality,
+          initialId: profile.email,
+        ),
+      ),
     );
-    if (result == true) {
-      _loadUserProfile();
+
+    if (updatedProfileData != null && updatedProfileData is Map<String, String>) {
+      setState(() {
+        _userProfile = UserProfile(
+          name: updatedProfileData['name'] ?? _userProfile!.name,
+          phoneNumber: updatedProfileData['phoneNumber'] ?? _userProfile!.phoneNumber,
+          gender: _userProfile!.gender,
+          birthdate: updatedProfileData['birthdate'] ?? _userProfile!.birthdate,
+          nationality: updatedProfileData['nationality'] ?? _userProfile!.nationality,
+          email: _userProfile!.email,
+          travelStyles: _userProfile!.travelStyles,
+        );
+      });
     }
   }
+
 
   void _showLogoutDialog() {
     showDialog(
@@ -203,9 +247,7 @@ class _MypageScreenState extends State<MypageScreen> {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('취소')),
           TextButton(
             onPressed: () async {
-              await AuthService().logout();
-              if (!mounted) return;
-              Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const LoginScreen()), (route) => false);
+              await AuthService().logout(context);
             },
             child: const Text('로그아웃', style: TextStyle(color: Colors.red)),
           ),

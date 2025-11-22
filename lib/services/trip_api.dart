@@ -17,200 +17,384 @@ class TripService {
     debugPrint('[TripService] $message');
   }
 
-  // --- Trip Management (방 생성, 참여, 목록, 삭제) ---
-
-  Future<TripCreationInfo> createTrip(String tripName, String destination) async {
-    final token = await AuthService().getToken();
-    if (token == null) throw Exception('인증 토큰이 없습니다.');
-
-    final url = Uri.parse('$baseUrl/api/trips');
-    final body = {'name': tripName, 'destination': destination}; // 백엔드 DTO 필드명('name')에 맞춤
-    _log('🚀 여행 방 생성 요청: POST $url\n   - Body: ${jsonEncode(body)}');
-
-    final response = await http.post(url, headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'}, body: jsonEncode(body));
-    _log('✅ 여행 방 생성 응답: ${response.statusCode}');
-
-    if (response.statusCode == 201) {
-      final data = json.decode(utf8.decode(response.bodyBytes));
-      return TripCreationInfo.fromJson(data);
-    } else {
-      throw Exception('실패: ${response.statusCode}, Body: ${response.body}');
-    }
-  }
-
-  Future<void> joinTrip(String inviteCode) async {
-    final token = await AuthService().getToken();
-    if (token == null) throw Exception('인증 토큰이 없습니다.');
-
-    final url = Uri.parse('$baseUrl/api/trips/join/$inviteCode');
-    _log('🚀 여행 참여 요청: POST $url');
-
-    final response = await http.post(url, headers: {'Authorization': 'Bearer $token'});
-    _log('✅ 여행 참여 응답: ${response.statusCode}');
-
-    if (response.statusCode != 200) {
-      throw Exception('실패: ${response.statusCode}, Body: ${response.body}');
-    }
-  }
-
+  /// =============================
+  ///  API 1: 내 여행 목록 조회
+  /// =============================
   Future<List<TripSummary>> getMyTrips() async {
     final token = await AuthService().getToken();
-    if (token == null) throw Exception('인증 토큰이 없습니다.');
+    final url = Uri.parse('$baseUrl/api/users/me/trips'); // 🔥 수정됨
+    _log('🚀 내 여행 목록 조회 요청: GET $url');
 
-    final url = Uri.parse('$baseUrl/api/users/me/trips');
-    _log('🚀 내 여행 목록 요청: GET $url');
+    try {
+      final response = await http.get(url, headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      });
 
-    final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
-    _log('✅ 내 여행 목록 응답: ${response.statusCode}');
+      _log('✅ 내 여행 목록 조회 응답: ${response.statusCode}');
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
-      return data.map((json) => TripSummary.fromJson(json)).toList();
-    } else {
-      throw Exception('실패: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
+        return data.map((json) => TripSummary.fromJson(json)).toList();
+      } else {
+        _log('❌ 내 여행 목록 조회 실패: ${response.body}');
+        throw Exception('내 여행 목록을 불러오는데 실패했습니다: ${response.statusCode}');
+      }
+    } catch (e) {
+      _log('❌ 내 여행 목록 조회 중 오류: $e');
+      rethrow;
     }
   }
 
+  /// =============================
+  ///  API 2: 여행 상세 정보 조회
+  /// =============================
+  Future<TripDetail> getTripById(int tripId) async {
+    final token = await AuthService().getToken();
+    final url = Uri.parse('$baseUrl/api/trips/$tripId');
+    _log('🚀 여행 상세 정보 요청: GET $url');
+
+    try {
+      final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+
+      _log('✅ 여행 상세 정보 응답: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        return TripDetail.fromJson(json.decode(utf8.decode(response.bodyBytes)));
+      } else {
+        throw Exception('Failed to load trip details: ${response.statusCode}');
+      }
+    } catch (e) {
+      _log('❌ 여행 상세 정보 조회 오류: $e');
+      rethrow;
+    }
+  }
+
+  /// =============================
+  ///  API 3: 여행 생성 (백엔드 기준으로 필드 수정됨)
+  /// =============================
+  Future<TripCreationInfo> createTrip(String title, String startDate, String endDate) async {
+    final token = await AuthService().getToken();
+    final url = Uri.parse('$baseUrl/api/trips');
+    _log('🚀 여행 생성 요청: POST $url');
+
+    final body = jsonEncode({
+      'name': title, // 🔥 수정됨 (backend: name)
+      'destination': '', // 🔥 FE 임시 값 (나중에 목적지 입력기능 연결)
+      'startDate': startDate,
+      'endDate': endDate,
+    });
+
+    _log('   - Body: $body');
+
+    try {
+      final response = await http.post(url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token'
+          },
+          body: body);
+
+      _log('✅ 여행 생성 응답: ${response.statusCode}');
+
+      if (response.statusCode == 201) {
+        return TripCreationInfo.fromJson(json.decode(utf8.decode(response.bodyBytes)));
+      } else {
+        _log('❌ 여행 생성 실패: ${response.body}');
+        throw Exception('Failed to create trip: ${response.statusCode}');
+      }
+    } catch (e) {
+      _log('❌ 여행 생성 중 오류: $e');
+      rethrow;
+    }
+  }
+
+  /// =============================
+  ///  API 4: 여행 참여
+  /// =============================
+  Future<void> joinTrip(String inviteCode) async {
+    final token = await AuthService().getToken();
+    final url = Uri.parse('$baseUrl/api/trips/join');
+    _log('🚀 여행 참가 요청: POST $url');
+
+    final body = jsonEncode({'inviteCode': inviteCode});
+
+    try {
+      final response = await http.post(url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token'
+          },
+          body: body);
+
+      _log('✅ 여행 참가 응답: ${response.statusCode}');
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to join trip: ${response.statusCode}');
+      }
+    } catch (e) {
+      _log('❌ 여행 참가 중 오류: $e');
+      rethrow;
+    }
+  }
+
+  /// =============================
+  ///  API 5: 여행 삭제
+  /// =============================
   Future<void> deleteTrip(int tripId) async {
     final token = await AuthService().getToken();
-    if (token == null) throw Exception('인증 토큰이 없습니다.');
-
     final url = Uri.parse('$baseUrl/api/trips/$tripId');
-    _log('🚀 여행 방 삭제 요청: DELETE $url');
+    _log('🚀 여행 삭제 요청: DELETE $url');
 
-    final response = await http.delete(url, headers: {'Authorization': 'Bearer $token'});
-    _log('✅ 여행 방 삭제 응답: ${response.statusCode}');
+    try {
+      final response = await http.delete(url, headers: {'Authorization': 'Bearer $token'});
 
-    if (response.statusCode != 204) {
-      throw Exception('실패: ${response.statusCode}');
+      _log('✅ 여행 삭제 응답: ${response.statusCode}');
+
+      if (response.statusCode != 204) {
+        throw Exception('Failed to delete trip: ${response.statusCode}');
+      }
+    } catch (e) {
+      _log('❌ 여행 삭제 중 오류: $e');
+      rethrow;
     }
   }
 
-  // --- Date Planning ---
-
-  Future<DateStatus> getDateStatus(int tripId) async {
-    final token = await AuthService().getToken();
-    if (token == null) throw Exception('인증 토큰이 없습니다.');
-    final url = Uri.parse('$baseUrl/api/trips/$tripId/date-status');
-    _log('🚀 날짜 합의 현황 요청: GET $url');
-    final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
-    _log('✅ 날짜 합의 현황 응답: ${response.statusCode}');
-    if (response.statusCode == 200) {
-      return DateStatus.fromJson(json.decode(utf8.decode(response.bodyBytes)));
-    } else {
-      throw Exception('실패: ${response.statusCode}');
-    }
-  }
-
-  Future<void> updateAvailableDates(int tripId, List<Map<String, String>> dates) async {
-    final token = await AuthService().getToken();
-    if (token == null) throw Exception('인증 토큰이 없습니다.');
-    final url = Uri.parse('$baseUrl/api/trips/$tripId/available-dates');
-    final body = {'availableDateRequests': dates};
-    _log('🚀 가능 날짜 수정 요청: PUT $url\n   - Body: ${jsonEncode(body)}');
-    final response = await http.put(url, headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'}, body: jsonEncode(body));
-    _log('✅ 가능 날짜 수정 응답: ${response.statusCode}');
-    if (response.statusCode != 200) {
-      throw Exception('실패: ${response.statusCode}');
-    }
-  }
-
-  Future<void> confirmDate(int tripId, String startDate, String endDate) async {
-    final token = await AuthService().getToken();
-    if (token == null) throw Exception('인증 토큰이 없습니다.');
-    final url = Uri.parse('$baseUrl/api/trips/$tripId/date-confirm');
-    final body = {'startDate': startDate, 'endDate': endDate};
-    _log('🚀 여행 날짜 확정 요청: PUT $url\n   - Body: ${jsonEncode(body)}');
-    final response = await http.put(url, headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'}, body: jsonEncode(body));
-    _log('✅ 여행 날짜 확정 응답: ${response.statusCode}');
-    if (response.statusCode != 200) {
-      throw Exception('실패: ${response.statusCode}');
-    }
-  }
-
-  // --- Itinerary ---
-
+  /// =============================
+  ///  API 7: 여행 일정 조회
+  /// =============================
   Future<List<Itinerary>> getItinerary(int tripId) async {
     final token = await AuthService().getToken();
-    final url = Uri.parse('$baseUrl/api/trips/$tripId/itinerary');
-    _log('🚀 일정표 조회 요청: GET $url');
-    final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
-    _log('✅ 일정표 조회 응답: ${response.statusCode}');
-    if (response.statusCode == 200) {
-      final data = json.decode(utf8.decode(response.bodyBytes));
-      final List<dynamic> itineraryList = data['itineraries'] ?? [];
-      return itineraryList.map((json) => Itinerary.fromJson(json)).toList();
-    } else {
-      throw Exception('실패: ${response.statusCode}');
+    final url = Uri.parse('$baseUrl/api/trips/$tripId/itineraries');
+    _log('🚀 여행 일정 조회 요청: GET $url');
+
+    try {
+      final response = await http.get(url, headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      });
+
+      _log('✅ 여행 일정 조회 응답: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
+        return data.map((json) => Itinerary.fromJson(json)).toList();
+      } else {
+        _log('❌ 여행 일정 조회 실패: ${response.body}');
+        throw Exception('여행 일정을 불러오는데 실패했습니다: ${response.statusCode}');
+      }
+    } catch (e) {
+      _log('❌ 여행 일정 조회 중 오류: $e');
+      rethrow;
     }
   }
 
-  Future<void> createItineraryItem(int tripId, Map<String, dynamic> itemData) async {
+  /// =============================
+  ///  API 14: 날짜 투표 현황 조회
+  /// =============================
+  Future<DateStatus> getDateStatus(int tripId) async {
     final token = await AuthService().getToken();
-    final url = Uri.parse('$baseUrl/api/trips/$tripId/itinerary');
-    _log('🚀 새 일정 추가 요청: POST $url\n   - Body: ${jsonEncode(itemData)}');
-    final response = await http.post(url, headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'}, body: jsonEncode(itemData));
-    _log('✅ 새 일정 추가 응답: ${response.statusCode}');
-    if (response.statusCode != 201) throw Exception('실패: ${response.statusCode}');
+    final url = Uri.parse('$baseUrl/api/trips/$tripId/dates/status');
+    _log('🚀 날짜 투표 현황 조회 요청: GET $url');
+
+    try {
+      final response = await http.get(url, headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      });
+
+      _log('✅ 날짜 투표 현황 조회 응답: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        return DateStatus.fromJson(json.decode(utf8.decode(response.bodyBytes)));
+      } else {
+        _log('❌ 날짜 투표 현황 조회 실패: ${response.body}');
+        throw Exception('날짜 투표 현황을 불러오는데 실패했습니다: ${response.statusCode}');
+      }
+    } catch (e) {
+      _log('❌ 날짜 투표 현황 조회 중 오류: $e');
+      rethrow;
+    }
   }
 
-  Future<void> updateItineraryItem(int itemId, Map<String, dynamic> itemData) async {
+  /// =============================
+  ///  API 15: 가능한 날짜 업데이트
+  /// =============================
+  Future<void> updateAvailableDates(int tripId, List<Map<String, String>> dates) async {
     final token = await AuthService().getToken();
-    final url = Uri.parse('$baseUrl/api/itinerary/$itemId');
-    _log('🚀 일정 수정 요청: PUT $url\n   - Body: ${jsonEncode(itemData)}');
-    final response = await http.put(url, headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'}, body: jsonEncode(itemData));
-    _log('✅ 일정 수정 응답: ${response.statusCode}');
-    if (response.statusCode != 200) throw Exception('실패: ${response.statusCode}');
+    final url = Uri.parse('$baseUrl/api/trips/$tripId/dates');
+    _log('🚀 가능한 날짜 업데이트 요청: POST $url');
+    _log('   - Body: ${jsonEncode(dates)}');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'availableDates': dates}),
+      );
+
+      _log('✅ 가능한 날짜 업데이트 응답: ${response.statusCode}');
+
+      if (response.statusCode != 200) {
+        _log('❌ 가능한 날짜 업데이트 실패: ${response.body}');
+        throw Exception('가능한 날짜 업데이트에 실패했습니다: ${response.statusCode}');
+      }
+    } catch (e) {
+      _log('❌ 가능한 날짜 업데이트 중 오류: $e');
+      rethrow;
+    }
   }
 
-  Future<void> deleteItineraryItem(int itemId) async {
+  /// =============================
+  ///  API 16: 여행 날짜 확정
+  /// =============================
+  Future<void> confirmDate(int tripId, String startDate, String endDate) async {
     final token = await AuthService().getToken();
-    final url = Uri.parse('$baseUrl/api/itinerary/$itemId');
-    _log('🚀 일정 삭제 요청: DELETE $url');
-    final response = await http.delete(url, headers: {'Authorization': 'Bearer $token'});
-    _log('✅ 일정 삭제 응답: ${response.statusCode}');
-    if (response.statusCode != 204) throw Exception('실패: ${response.statusCode}');
+    final url = Uri.parse('$baseUrl/api/trips/$tripId/dates/confirm');
+    _log('🚀 여행 날짜 확정 요청: POST $url');
+    _log('   - Body: ${jsonEncode({'startDate': startDate, 'endDate': endDate})}');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'startDate': startDate,
+          'endDate': endDate,
+        }),
+      );
+
+      _log('✅ 여행 날짜 확정 응답: ${response.statusCode}');
+
+      if (response.statusCode != 200) {
+        _log('❌ 여행 날짜 확정 실패: ${response.body}');
+        throw Exception('여행 날짜 확정에 실패했습니다: ${response.statusCode}');
+      }
+    } catch (e) {
+      _log('❌ 여행 날짜 확정 중 오류: $e');
+      rethrow;
+    }
   }
 
-  // --- Checklist ---
-
+  /// =============================
+  ///  API 17: 체크리스트 조회
+  /// =============================
   Future<Checklist> getChecklists(int tripId) async {
     final token = await AuthService().getToken();
     final url = Uri.parse('$baseUrl/api/trips/$tripId/checklists');
     _log('🚀 체크리스트 조회 요청: GET $url');
-    final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
-    _log('✅ 체크리스트 조회 응답: ${response.statusCode}');
-    if (response.statusCode == 200) {
-      return Checklist.fromJson(json.decode(utf8.decode(response.bodyBytes)));
-    } else {
-      throw Exception('실패: ${response.statusCode}');
+
+    try {
+      final response = await http.get(url, headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      });
+
+      _log('✅ 체크리스트 조회 응답: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        return Checklist.fromJson(json.decode(utf8.decode(response.bodyBytes)));
+      } else {
+        _log('❌ 체크리스트 조회 실패: ${response.body}');
+        throw Exception('체크리스트를 불러오는데 실패했습니다: ${response.statusCode}');
+      }
+    } catch (e) {
+      _log('❌ 체크리스트 조회 중 오류: $e');
+      rethrow;
     }
   }
 
-  Future<void> createChecklistItem(int tripId, Map<String, dynamic> itemData) async {
+  /// =============================
+  ///  API 18: 체크리스트 항목 생성
+  /// =============================
+  Future<ChecklistItem> createChecklistItem(int tripId, Map<String, dynamic> data) async {
     final token = await AuthService().getToken();
     final url = Uri.parse('$baseUrl/api/trips/$tripId/checklists');
-    _log('🚀 체크리스트 항목 추가 요청: POST $url\n   - Body: ${jsonEncode(itemData)}');
-    final response = await http.post(url, headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'}, body: jsonEncode(itemData));
-    _log('✅ 체크리스트 항목 추가 응답: ${response.statusCode}');
-    if (response.statusCode != 201) throw Exception('실패: ${response.statusCode}');
+    _log('🚀 체크리스트 항목 생성 요청: POST $url');
+    _log('   - Body: ${jsonEncode(data)}');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(data),
+      );
+
+      _log('✅ 체크리스트 항목 생성 응답: ${response.statusCode}');
+
+      if (response.statusCode == 201) {
+        return ChecklistItem.fromJson(json.decode(utf8.decode(response.bodyBytes)));
+      } else {
+        _log('❌ 체크리스트 항목 생성 실패: ${response.body}');
+        throw Exception('체크리스트 항목 생성에 실패했습니다: ${response.statusCode}');
+      }
+    } catch (e) {
+      _log('❌ 체크리스트 항목 생성 중 오류: $e');
+      rethrow;
+    }
   }
 
-  Future<void> toggleChecklistCompletion(int itemId) async {
+  /// =============================
+  ///  API 19: 체크리스트 항목 완료/미완료 처리
+  /// =============================
+  Future<void> toggleChecklistCompletion(int checklistItemId) async {
     final token = await AuthService().getToken();
-    final url = Uri.parse('$baseUrl/api/checklists/$itemId/toggle');
-    _log('🚀 체크리스트 토글 요청: PUT $url');
-    final response = await http.put(url, headers: {'Authorization': 'Bearer $token'});
-    _log('✅ 체크리스트 토글 응답: ${response.statusCode}');
-    if (response.statusCode != 200) throw Exception('실패: ${response.statusCode}');
+    final url = Uri.parse('$baseUrl/api/checklists/$checklistItemId');
+    _log('🚀 체크리스트 항목 상태 변경 요청: PATCH $url');
+
+    try {
+      final response = await http.patch(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      _log('✅ 체크리스트 항목 상태 변경 응답: ${response.statusCode}');
+
+      if (response.statusCode != 200) {
+        _log('❌ 체크리스트 항목 상태 변경 실패: ${response.body}');
+        throw Exception('체크리스트 항목 상태 변경에 실패했습니다: ${response.statusCode}');
+      }
+    } catch (e) {
+      _log('❌ 체크리스트 항목 상태 변경 중 오류: $e');
+      rethrow;
+    }
   }
 
-  Future<void> deleteChecklistItem(int itemId) async {
+  /// =============================
+  ///  API 20: 체크리스트 항목 삭제
+  /// =============================
+  Future<void> deleteChecklistItem(int checklistItemId) async {
     final token = await AuthService().getToken();
-    final url = Uri.parse('$baseUrl/api/checklists/$itemId');
+    final url = Uri.parse('$baseUrl/api/checklists/$checklistItemId');
     _log('🚀 체크리스트 항목 삭제 요청: DELETE $url');
-    final response = await http.delete(url, headers: {'Authorization': 'Bearer $token'});
-    _log('✅ 체크리스트 항목 삭제 응답: ${response.statusCode}');
-    if (response.statusCode != 204) throw Exception('실패: ${response.statusCode}');
+
+    try {
+      final response = await http.delete(
+        url,
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      _log('✅ 체크리스트 항목 삭제 응답: ${response.statusCode}');
+
+      if (response.statusCode != 204) {
+        _log('❌ 체크리스트 항목 삭제 실패: ${response.body}');
+        throw Exception('체크리스트 항목 삭제에 실패했습니다: ${response.statusCode}');
+      }
+    } catch (e) {
+      _log('❌ 체크리스트 항목 삭제 중 오류: $e');
+      rethrow;
+    }
   }
 }

@@ -1,9 +1,10 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:sw_project_fe/config/api_config.dart';
 import 'package:sw_project_fe/models/user_profile.dart';
+import 'package:sw_project_fe/screens/login_screen.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -14,6 +15,15 @@ class AuthService {
 
   void _log(String message) {
     debugPrint('[AuthService] $message');
+  }
+
+  Future<void> _handleUnauthorized(BuildContext context) async {
+    await deleteToken();
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      (route) => false,
+    );
   }
 
   Future<LoginResponse> loginWithKakao(String kakaoAccessToken) async {
@@ -96,7 +106,7 @@ class AuthService {
     }
   }
 
-  Future<UserProfile> getProfile() async {
+  Future<UserProfile> getProfile(BuildContext context) async {
     final token = await getToken();
     if (token == null) throw Exception('인증 토큰이 없습니다.');
 
@@ -115,6 +125,10 @@ class AuthService {
         final data = json.decode(utf8.decode(response.bodyBytes));
         _log('   -> 프로필 파싱 성공');
         return UserProfile.fromJson(data);
+      } else if (response.statusCode == 401) {
+        _log('❌ 프로필 정보 요청 실패: 401 Unauthorized');
+        await _handleUnauthorized(context);
+        throw Exception('세션이 만료되었습니다. 다시 로그인해주세요.');
       } else {
         throw Exception('실패: ${response.statusCode}');
       }
@@ -124,7 +138,7 @@ class AuthService {
     }
   }
 
-  Future<void> updateProfile(Map<String, String> profileData) async {
+  Future<void> updateProfile(BuildContext context, Map<String, String> profileData) async {
     final token = await getToken();
     if (token == null) throw Exception('인증 토큰이 없습니다.');
 
@@ -139,7 +153,11 @@ class AuthService {
         body: jsonEncode(profileData),
       );
       _log('✅ 프로필 수정 응답: ${response.statusCode}');
-      if (response.statusCode != 200) {
+      if (response.statusCode == 401) {
+        _log('❌ 프로필 수정 실패: 401 Unauthorized');
+        await _handleUnauthorized(context);
+        throw Exception('세션이 만료되었습니다. 다시 로그인해주세요.');
+      } else if (response.statusCode != 200) {
         throw Exception('실패: ${response.statusCode}, Body: ${response.body}');
       }
       _log('   -> 프로필 수정 성공');
@@ -148,21 +166,30 @@ class AuthService {
       rethrow;
     }
   }
-
-  Future<void> logout() async {
+  
+  Future<void> clearSession() async {
     final token = await getToken();
-    
     if (token != null) {
       final url = Uri.parse('$baseUrl/api/auth/logout');
-      _log('🚀 로그아웃 요청: POST $url');
+      _log('🚀 로그아웃 요청 (세션 정리): POST $url');
       try {
         await http.post(url, headers: {'Authorization': 'Bearer $token'});
-        _log('✅ 서버 로그아웃 요청 성공');
+        _log('✅ 서버 로그아웃 성공 (세션 정리)');
       } catch (e) {
-        _log('❌ 서버 로그아웃 요청 실패 (무시함): $e');
+        _log('❌ 서버 로그아웃 실패 (무시함): $e');
       }
     }
-    await deleteToken();
+    await deleteToken(); // 클라이언트 토큰 삭제
+  }
+
+
+  Future<void> logout(BuildContext context) async {
+    await clearSession(); // 세션 정리
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      (route) => false,
+    );
   }
 
   Future<void> _saveToken(String token) async {

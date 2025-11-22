@@ -1,4 +1,3 @@
-/// 체크리스트 전체 조회 응답 모델 (API 20)
 class Checklist {
   final List<ChecklistItem> sharedList;
   final List<ChecklistItem> personalList;
@@ -17,7 +16,7 @@ class ChecklistItem {
   final int id;
   final String title;
   final bool isChecked;
-  final String? assignee; // 담당자 (공용일 경우)
+  final String? assignee; // 담당자 이름, null일 수 있음
 
   ChecklistItem({
     required this.id,

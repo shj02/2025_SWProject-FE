@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:sw_project_fe/services/kakao_login_service.dart';
-import 'package:sw_project_fe/services/user_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,9 +20,6 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       // 서비스 레이어에 로그인 요청
       final loginResponse = await _kakaoLoginService.login();
-
-      // UserService에 사용자 ID 저장 (선택적)
-      UserService().setUserId(loginResponse.userId);
 
       if (!mounted) return;
 

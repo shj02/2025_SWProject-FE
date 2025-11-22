@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:sw_project_fe/models/trip.dart';
 import 'package:sw_project_fe/services/trip_api.dart';
 
 class NewPlanScreen extends StatefulWidget {
@@ -11,39 +12,85 @@ class NewPlanScreen extends StatefulWidget {
 
 class _NewPlanScreenState extends State<NewPlanScreen> {
   final TextEditingController _tripNameController = TextEditingController();
-  final TextEditingController _destinationController = TextEditingController();
   final TextEditingController _friendCodeController = TextEditingController();
   bool _isLoading = false;
+  DateTime? _startDate;
+  DateTime? _endDate;
 
   @override
   void dispose() {
     _tripNameController.dispose();
-    _destinationController.dispose();
     _friendCodeController.dispose();
     super.dispose();
   }
 
+  Future<void> _selectDate(BuildContext context, bool isStartDate) async {
+    final initialDate = (isStartDate ? _startDate : _endDate) ?? DateTime.now();
+    final firstDate = isStartDate ? DateTime.now() : (_startDate ?? DateTime.now());
+    final lastDate = DateTime(2101);
+
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFFFF8282),
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFFFF8282),
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedDate != null) {
+      setState(() {
+        if (isStartDate) {
+          _startDate = pickedDate;
+          if (_endDate != null && _endDate!.isBefore(_startDate!)) {
+            _endDate = null;
+          }
+        } else {
+          _endDate = pickedDate;
+        }
+      });
+    }
+  }
+
+
   Future<void> _createRoom() async {
     if (_isLoading) return;
-    if (_tripNameController.text.isEmpty || _destinationController.text.isEmpty) {
-      _showSnackBar('여행이름과 여행지를 입력해주세요.');
+    if (_tripNameController.text.isEmpty || _startDate == null || _endDate == null) {
+      _showSnackBar('여행 이름과 기간을 모두 입력해주세요.');
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
+      final startDateStr = '''${_startDate!.year}-${_startDate!.month.toString().padLeft(2, '0')}-${_startDate!.day.toString().padLeft(2, '0')}''';
+      final endDateStr = '''${_endDate!.year}-${_endDate!.month.toString().padLeft(2, '0')}-${_endDate!.day.toString().padLeft(2, '0')}''';
+
       final result = await TripService().createTrip(
         _tripNameController.text.trim(),
-        _destinationController.text.trim(),
+        startDateStr,
+        endDateStr,
       );
       if (mounted) {
-        // TODO: 생성된 방 정보를 이전 화면(main_menu)으로 전달해야 함
-        _showSnackBar('새로운 여행 방이 생성되었습니다! (초대코드: ${result.inviteCode})', isError: false);
-        Navigator.pop(context, true); // 성공했다는 의미로 true 전달
+        Navigator.pop(context, result);
       }
     } catch (e) {
-      _showSnackBar(e.toString());
+      _showSnackBar('여행 생성에 실패했습니다: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -61,7 +108,7 @@ class _NewPlanScreenState extends State<NewPlanScreen> {
       await TripService().joinTrip(_friendCodeController.text.trim());
       if (mounted) {
         _showSnackBar('여행 방에 성공적으로 참여했습니다!', isError: false);
-        Navigator.pop(context, true); // 성공했다는 의미로 true 전달
+        Navigator.pop(context, true);
       }
     } catch (e) {
       _showSnackBar(e.toString());
@@ -83,7 +130,6 @@ class _NewPlanScreenState extends State<NewPlanScreen> {
   @override
   Widget build(BuildContext context) {
     final scale = MediaQuery.of(context).size.width / 402.0;
-    // UI 구조는 기존과 동일하게 유지
     return Scaffold(
       backgroundColor: const Color(0xFFFFFCFC),
       body: SafeArea(
@@ -105,7 +151,7 @@ class _NewPlanScreenState extends State<NewPlanScreen> {
                     SizedBox(height: 37 * scale),
                     _buildInputForm(scale),
                     SizedBox(height: 37 * scale),
-                    ElevatedButton(onPressed: _isLoading ? null : _createRoom, style: ElevatedButton.styleFrom(minimumSize: Size(251 * scale, 49 * scale)), child: const Text('여행 계획 시작!')),
+                    ElevatedButton(onPressed: _isLoading ? null : _createRoom, style: ElevatedButton.styleFrom(minimumSize: Size(251 * scale, 49 * scale), backgroundColor: const Color(0xFFFF8282), foregroundColor: Colors.white), child: const Text('여행 계획 시작!')),
                   ],
                 ),
               ),
@@ -125,20 +171,53 @@ class _NewPlanScreenState extends State<NewPlanScreen> {
         children: [
           _buildTextField(label: '여행이름', controller: _tripNameController, hint: '여행이름을 입력하세요.', scale: scale),
           SizedBox(height: 20 * scale),
-          _buildTextField(label: '여행지', controller: _destinationController, hint: '여행지를 입력하세요.', scale: scale),
+          _buildDatePickerField(label: '여행 시작일', date: _startDate, onTap: () => _selectDate(context, true), scale: scale),
+          SizedBox(height: 20 * scale),
+          _buildDatePickerField(label: '여행 종료일', date: _endDate, onTap: () => _selectDate(context, false), scale: scale),
           SizedBox(height: 20 * scale),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(child: _buildTextField(label: '친구의 방에 초대받기', controller: _friendCodeController, hint: '친구의 코드를 입력하세요.', scale: scale, isCode: true)),
               SizedBox(width: 8 * scale),
-              Padding(
-                padding: EdgeInsets.only(top: 24 * scale), // To align with the text field
-                child: ElevatedButton(onPressed: _isLoading ? null : _joinRoom, child: const Text('참여')),
-              ),
+              ElevatedButton(onPressed: _isLoading ? null : _joinRoom, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8282), foregroundColor: Colors.white), child: const Text('참여')),
             ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDatePickerField({required String label, DateTime? date, required VoidCallback onTap, required double scale}) {
+    final dateText = date == null ? '날짜를 선택하세요' : '''${date.year}년 ${date.month}월 ${date.day}일''';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(fontSize: 20 * scale, fontWeight: FontWeight.w400)),
+        SizedBox(height: 4 * scale),
+        InkWell(
+          onTap: onTap,
+          child: Container(
+            height: 58,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12 * scale),
+              border: Border.all(color: Colors.black54),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  dateText,
+                  style: TextStyle(fontSize: 16, color: date == null ? Colors.grey[600] : Colors.black),
+                ),
+                const Icon(Icons.calendar_today, color: Colors.grey),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -148,10 +227,20 @@ class _NewPlanScreenState extends State<NewPlanScreen> {
       children: [
         Text(label, style: TextStyle(fontSize: 20 * scale, fontWeight: FontWeight.w400)),
         SizedBox(height: 4 * scale),
-        TextField(
-          controller: controller,
-          inputFormatters: isCode ? [FilteringTextInputFormatter.allow(RegExp(r'[A-Z0-9]')), LengthLimitingTextInputFormatter(8)] : [],
-          decoration: InputDecoration(hintText: hint, filled: true, fillColor: Colors.white, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12 * scale))),
+        SizedBox(
+          height: 58,
+          child: TextField(
+            controller: controller,
+            inputFormatters: isCode ? [FilteringTextInputFormatter.allow(RegExp(r'[A-Z0-9]')), LengthLimitingTextInputFormatter(8)] : [],
+            decoration: InputDecoration(
+                hintText: hint,
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12 * scale), borderSide: const BorderSide(color: Colors.black54)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12 * scale), borderSide: const BorderSide(color: Colors.black54))
+            ),
+          ),
         ),
       ],
     );
