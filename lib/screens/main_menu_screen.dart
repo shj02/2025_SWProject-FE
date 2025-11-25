@@ -311,7 +311,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           padding: EdgeInsets.symmetric(horizontal: 17 * scale),
           child: Column(
             children: [
-              SizedBox(height: 15* scale),
+              SizedBox(height: 15 * scale),
 
               // "뭐하지..?" 텍스트
               Text(
@@ -347,17 +347,15 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                     borderRadius: BorderRadius.circular(34 * scale),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0x40000000), // 25% 투명도의 검은색
-                        offset: Offset(4, 4 * scale), // 아래쪽으로만 그림자
-                        blurRadius: 4 * scale, // 더 부드러운 그림자
-                        spreadRadius: 0,
+                        color: const Color(0x40000000),
+                        offset: Offset(4, 4 * scale),
+                        blurRadius: 4 * scale,
                         blurStyle: BlurStyle.inner,
                       ),
                       BoxShadow(
-                        color: const Color(0x1A000000), // 10% 투명도의 검은색 (추가 그림자)
+                        color: const Color(0x1A000000),
                         offset: Offset(0, 2 * scale),
                         blurRadius: 4 * scale,
-                        spreadRadius: 0,
                       ),
                     ],
                   ),
@@ -376,36 +374,24 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
 
               SizedBox(height: 16 * scale),
 
-              // 진행중인 계획 버튼 (비활성화)
-              Container(
-                width: 319 * scale,
-                height: 67 * scale,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF8282),
-                  borderRadius: BorderRadius.circular(34 * scale),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0x40000000), // 25% 투명도의 검은색
-                      offset: Offset(4, 4 * scale), // 아래쪽으로만 그림자
-                      blurRadius: 4 * scale, // 더 부드러운 그림자
-                      spreadRadius: 0,
-                      blurStyle: BlurStyle.inner,
-                    ),
-                    BoxShadow(
-                      color: const Color(0x1A000000), // 10% 투명도의 검은색 (추가 그림자)
-                      offset: Offset(0, 2 * scale),
-                      blurRadius: 4 * scale,
-                      spreadRadius: 0,
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    '진행중인 계획',
-                    style: TextStyle(
-                      fontSize: 32 * scale,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w400,
+              // ⛔ 진행중인 계획 버튼 (비활성 + 색만 회색으로 변경)
+              IgnorePointer(
+                ignoring: true,
+                child: Container(
+                  width: 319 * scale,      // 크기 그대로 유지
+                  height: 67 * scale,      // 크기 그대로 유지
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5E5E5), // 비활성 회색 배경
+                    borderRadius: BorderRadius.circular(34 * scale),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '진행중인 계획',
+                      style: TextStyle(
+                        fontSize: 32 * scale,
+                        color: const Color(0xFFB3B3B3), // 비활성 회색 텍스트
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                   ),
                 ),
@@ -416,6 +402,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
       ],
     );
   }
+
 
   // 방이 있을 때의 뷰 (4-1번 프레임)
   Widget _buildRoomExistsView(double scale) {
