@@ -85,7 +85,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
         Navigator.pushReplacement(
           context,
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => const TripPlanDateScreen(),
+            pageBuilder: (context, animation, secondaryAnimation) => const TripPlanDateScreen(tripId: 1),
             transitionDuration: Duration.zero,
             reverseTransitionDuration: Duration.zero,
           ),
@@ -576,20 +576,20 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   Widget targetScreen;
                   switch (nextRoute) {
                     case 'candidates':
-                      targetScreen = const TripPlanCandidatesScreen();
+                      targetScreen = const TripPlanCandidatesScreen(tripId: 1);
                       break;
                     case 'schedule':
-                      targetScreen = const TripPlanScheduleScreen();
+                      targetScreen = const TripPlanScheduleScreen(tripId: 1);
                       break;
                     case 'budget':
-                      targetScreen = const TripPlanBudgetScreen();
+                      targetScreen = const TripPlanBudgetScreen(tripId: 1);
                       break;
                     case 'checklist':
-                      targetScreen = const TripPlanChecklistScreen();
+                      targetScreen = const TripPlanChecklistScreen(tripId: 1);
                       break;
                     case 'date':
                     default:
-                      targetScreen = const TripPlanDateScreen();
+                      targetScreen = const TripPlanDateScreen(tripId: 1);
                       break;
                   }
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../models/budget_models.dart';
+
 import '../models/schedule_models.dart';
 
 class TripPlanStateService {
