@@ -18,7 +18,14 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // 서비스 레이어에 로그인 요청
+      // ⭐ 개발용: 카카오 실제 로그인 패스하고 바로 메인으로 이동
+      Navigator.pushReplacementNamed(context, '/main');
+      return;
+
+      // ===============================
+      // 실제 카카오 연동 쓸 때 이 아래 다시 살리면 됨
+      // ===============================
+      /*
       final loginResponse = await _kakaoLoginService.login();
 
       if (!mounted) return;
@@ -29,10 +36,11 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         Navigator.pushReplacementNamed(context, '/signup');
       }
+      */
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('로그인에 실패했습니다. ')),
+        SnackBar(content: Text('로그인에 실패했습니다. (${e.toString()})')),
       );
     } finally {
       if (mounted) {
